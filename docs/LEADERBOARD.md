@@ -45,11 +45,9 @@ temperature 1.5, trained late July to early August.
 
 Submitted as an equal-weight average (0.25 each), no TTA:
 
-| submission | public LB | private LB |
+| submission | CV | private LB |
 |---|---|---|
-| `final-submission-equal-weight-no-tta` | <!-- owner: public score --> | **6.600 — 26th place** |
-
-The CV of the four-member average was not recorded in the notebooks.
+| `final-submission-equal-weight-no-tta` | 5.038 | **6.600 — 26th place** |
 
 ## Other recorded public scores
 
@@ -68,7 +66,7 @@ Probe submissions (built to measure a property of the test set, not to score wel
 
 ## Why the private score is above CV
 
-The final members score 5.14–5.26 on CV; the private leaderboard gave 6.600. The public board had run above CV for the
+The ensemble scores 5.038 on CV (members 5.14–5.26); the private leaderboard gave 6.600. The public board had run above CV for the
 later lines too (5.7 for a 5.03 CV line). Two differences between the test set and training were measured: about 16%
 of test wells are off the MD grid that every training well uses, and the test wells sit further from the training
 wells than random folds assume ([VALIDATION.md](VALIDATION.md)). How much of the gap each one explains, if any, was

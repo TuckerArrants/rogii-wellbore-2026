@@ -1,32 +1,32 @@
 # 03 · Kaggle submission
 
-`final-submission-equal-weight-no-tta.ipynb` is the submission that scored **6.600 on the private leaderboard (26th
-place)**. It runs offline on Kaggle (T4 × 2), reads four members' checkpoints, and writes `submission.csv`.
-**As run, outputs stripped.**
+**Code:** `rogii_wellbore.infer`. **Config:** `configs/submit/final_equal_weight.yaml`. **Driver:**
+`submit_kaggle.ipynb`. **Notebook of record:** `final-submission-equal-weight-no-tta.ipynb`, the submission that scored
+**6.600 on the private leaderboard (26th place)**, as run, outputs stripped.
 
-## Inputs
+```bash
+python -m rogii_wellbore.infer --config configs/submit/final_equal_weight.yaml --comp-root <competition data> --out submission.csv
+```
 
-| input | what |
-|---|---|
-| competition data | `rogii-wellbore-geology-prediction` |
-| `tuckerarrants/smp-offline` (dataset) | wheels for `segmentation_models_pytorch` 0.5.0 and `timm` 1.0.27, installed with internet off |
-| `tuckerarrants/rogii-v2s` (dataset) | the V2-XL, V2-L and V2-L small members: 35 checkpoints each plus their inference manifests |
-| `tuckerarrants/rogii-l2` (model, `pytorch/default/1`) | the L2 member: 35 checkpoints plus its manifest |
+## On Kaggle (internet off)
 
-## How it works
+Attach: the competition data; `tuckerarrants/smp-offline` (wheels for `segmentation_models_pytorch` 0.5.0 and `timm`
+1.0.27); `tuckerarrants/rogii-v2s` and the `tuckerarrants/rogii-l2` model (checkpoints); and this repo's code as a
+dataset, built with `python scripts/make_kaggle_src.py` and uploaded with the Kaggle CLI. The driver finds the package
+and the config anywhere under `/kaggle/input`.
 
-1. **The member registry (`MODEL_LIST`).** Each member names its folder, blend weight, refeed depth `eval_k`, and
-   temperatures. Everything else (encoder, stack depth, image size) is read from the member's own manifest. Any
-   setting given in the registry that disagrees with the manifest stops the notebook.
-2. **Guards.** The weights must sum to exactly 1.0. Handoff temperatures are checked against each manifest. The refeed
-   temperature is not recorded in these manifests, so the notebook prints a warning and uses 1.0, the training value.
-3. **Per-member geometry.** Each member renders the test wells at its own image size (the small V2-L at 224 × 448);
-   predictions are compared only after they are decoded back to one TVT per row, so members of different sizes
-   average directly.
-4. **Batched loading.** Checkpoints are loaded 4–8 at a time (the L2's are 3.6 GB each) and spread over both GPUs;
-   the result is the same as loading all at once.
-5. **Blend.** Each member's 35 checkpoints are averaged; the four member predictions are then averaged with equal
-   weights:
+## What it does
+
+1. **Members.** For each entry in the config: find the folder's `*_kaggle_inference_manifest.json`; take the encoder,
+   decoder and image geometry from it; take the weight, refeed depth `eval_k` and temperatures from the config, and stop
+   if the manifest records a different temperature (as a field, or in the free text of the older manifests).
+2. **Weights** must each be in (0, 1] and sum to exactly 1.0.
+3. **Prediction.** Each member renders the test wells at its own geometry. Checkpoints are loaded a few at a time (as
+   many as fit a T4 after an activation reserve; the L2's are 3.6 GB each) and spread over the GPUs. Each predicts
+   every well at depth `eval_k`; a member's prediction is the mean over its checkpoints, per native MD row. With
+   `tta: true`, also the mean over 8 PhaseJitter shifts (drop part of a bin of toe rows, re-bin).
+4. **Blend** of the members with their weights; post-PS rows go into `sample_submission.csv` order. Rows without a
+   prediction fall back to the well's last known TVT.
 
 | member | refeed | weight |
 |---|---|---|
@@ -35,13 +35,11 @@ place)**. It runs offline on Kaggle (T4 × 2), reads four members' checkpoints, 
 | `l_hT15_k3` | k = 3 | 0.25 |
 | `l_hT15_k3_small` | k = 3 | 0.25 |
 
-`DO_PHASE_JITTER_TTA = False`: one pass per checkpoint, no test-time augmentation.
-
-6. **Output.** `submission.csv` in `sample_submission.csv` order (`id`, `tvt`). A last cell plots each well's
-   prediction from the blend and from each member, as a visual check.
+No TTA in the final submission.
 
 ## The saved run
 
-The run stored with the notebook is the interactive one, on the 3 wells (14,151 rows) Kaggle shows outside scoring:
-all 140 checkpoints resolved, every row filled by the models (none by the fallback), predictions between 11,593 and
-12,239 ft.
+The run stored with the notebook of record is the interactive one, on the 3 wells (14,151 rows) Kaggle shows outside
+scoring: all 140 checkpoints resolved, every row filled by the models (none by the fallback), predictions between
+11,593 and 12,239 ft. The package's per-well prediction equals the notebook's, with and without TTA
+(`tests/test_parity_infer.py`).

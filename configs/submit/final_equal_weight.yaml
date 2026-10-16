@@ -1,0 +1,28 @@
+# The 26th-place submission (private 6.600): four members, 0.25 each, no TTA.
+# Paths are relative to `root` (the Kaggle input mount).
+root: /kaggle/input
+members:
+  l2_hT15_k1:
+    dir: models/tuckerarrants/rogii-l2/pytorch/default/1/5fold_l2_stack2_ema_25000pt_mdwarp42_bedwarp42_handoffT15_expa_pt
+    weight: 0.25
+    eval_k: 1
+    handoff_t: 1.5
+    refeed_t: 1.0
+  xl_hT15_k3:
+    dir: datasets/tuckerarrants/rogii-v2s/5fold_effnetv2_xl_stack2_ema_25000pt_mdwarp36_bedwarp36_unroll50_deepsup_handoffT15_expa_pt
+    weight: 0.25
+    eval_k: 3
+    handoff_t: 1.5
+    refeed_t: 1.0
+  l_hT15_k3:
+    dir: datasets/tuckerarrants/rogii-v2s/5fold_effnetv2_l_stack2_ema_25000pt_mdwarp36_bedwarp36_unroll50_deepsup_handoffT15_expa_pt
+    weight: 0.25
+    eval_k: 3
+    handoff_t: 1.5
+    refeed_t: 1.0
+  l_hT15_k3_small:
+    dir: datasets/tuckerarrants/rogii-v2s/5fold_effnetv2_l_stack2_ema_25000pt_mdwarp36_bedwarp36_unroll50_deepsup_handoffT15_expa_pt_H224_W448_bin1.1428571428571428
+    weight: 0.25
+    eval_k: 3
+    handoff_t: 1.5
+    refeed_t: 1.0

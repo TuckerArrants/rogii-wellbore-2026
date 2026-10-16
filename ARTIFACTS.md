@@ -10,13 +10,16 @@ Everything the notebooks read or wrote that is not in git.
 | offline wheels | [tuckerarrants/smp-offline](https://www.kaggle.com/datasets/tuckerarrants/smp-offline) | `segmentation_models_pytorch` 0.5.0, `timm` 1.0.27 | 03 |
 | V2 members | [tuckerarrants/rogii-v2s](https://www.kaggle.com/datasets/tuckerarrants/rogii-v2s) | V2-XL, V2-L and V2-L small: 35 checkpoints each + `ft39l_kaggle_inference_manifest.json` | 03 |
 | L2 member | [tuckerarrants/rogii-l2](https://www.kaggle.com/models/tuckerarrants/rogii-l2) (PyTorch, `default`, version 1) | L2: 35 checkpoints + manifest | 03 |
+| repo code | `tuckerarrants/rogii-wellbore-src` (not yet uploaded) | `src/rogii_wellbore` + `configs/`, built by `scripts/make_kaggle_src.py` | 03 driver |
 
 ## Google Drive (`MyDrive/Kaggle/ROGII-Wellbore/`)
 
-One folder per final member, written by [stage 01](pipeline/01_train/). Each holds the per-seed OOF predictions
-(`oof_f{fold}_s{seed}.npz`), per-seed metrics (`result_f{fold}_s{seed}.npz`), `ft39l_summary.json` (settings and
-all CV metrics), `ft39l_kaggle_inference_manifest.json`, and, depending on the folder, the fold splits and some or all of the
-checkpoints and pretraining checkpoints.
+One folder per final member, written by the training notebook (the package writes the same layout, with
+`summary.json` in place of `ft39l_summary.json`). Each holds all 35 per-seed OOF files (`oof_f{fold}_s{seed}.npz`,
+5 folds × 7 seeds; format in `src/rogii_wellbore/oof.py`), per-seed metrics (`result_f{fold}_s{seed}.npz`),
+`ft39l_summary.json` (settings and all CV metrics), `ft39l_kaggle_inference_manifest.json`, and, depending on the
+folder, the fold splits and some or all of the checkpoints and pretraining checkpoints. `configs/eval/final_blend.yaml`
+points at these folders.
 
 | member | folder |
 |---|---|

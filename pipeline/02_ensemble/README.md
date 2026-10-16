@@ -1,29 +1,30 @@
-# 02 · Ensemble analysis
+# 02 · Scoring members and the blend
 
-`ENSEMBLE_OOF_postproc.ipynb` loads the final members' checkpoints, produces their out-of-fold predictions on the
-real wells, and studies how they combine. It reuses the training notebook's data, image and model code unchanged, so
-its OOF predictions match the ones each member's training run saved. **As run, outputs stripped.**
+**Code:** `rogii_wellbore.eval`. **Config:** `configs/eval/final_blend.yaml`. **Driver:** `eval_colab.ipynb`.
+**Notebook of record:** `ENSEMBLE_OOF_postproc.ipynb`, as run, outputs stripped.
 
-**Runs on:** Colab with a GPU. **Cache first:** for each member it loads the per-seed OOF files from that member's
-Drive run folder when they exist and only runs the checkpoints for folds or seeds that are missing.
+```bash
+python -m rogii_wellbore.eval --config configs/eval/final_blend.yaml [--root <runs dir>] [--data-root <data>] [--out blend.json]
+```
 
-## Sections
+Reads each member's `oof_f*_s*.npz` (no GPU, no checkpoints) and prints:
 
-| # | section | what it does |
-|---|---|---|
-| 1–4 | setup and folds | Drive, data, imports, the same 5 folds as training |
-| 5–6 | real-image cache | renders the 773 real wells once (5 channels, including dZ) |
-| 7–9 | model and scorer | the two-stage U-Net and decode, and `_eval_model_pool`: the seed-averaged scorer used for every CV number |
-| 10 | member registry | V2-L, V2-L small (224 × 448), V2-XL and L2, each with its Drive folder, encoder, refeed depth and temperature |
-| 11 | OOF driver | OOF predictions for every member at its own settings |
-| 12 | correlation and blend | member-to-member error correlation (all rows and worst decile), the best linear blend, and the blend's offset/drift split and error by position along the well |
-| 13 | CV-inflation check | does a well's OOF error depend on its distance (or typewell similarity) to the training wells of its fold? |
-| 16–17 | PhaseJitter TTA and fp16 | each of 8 grid shifts scored alone, every combination of them scored with fold rotation, and the cost of running in half precision |
+- each member's seed-ensemble CV, per fold and pooled;
+- the blend: the weighted per-row average of the members' predictions, scored like a member, with offset/drift, tail
+  and heel-to-toe read-outs per fold;
+- the error correlation between each pair of members, over all rows and over the worst 10% of wells.
 
-## Recorded result: PhaseJitter TTA on the V2-L member
+With `--data-root`, truth comes from the competition files and member scores are exactly the training-time numbers
+(the test suite checks this). Without it, truth is rebuilt from the OOF files and scores can move in the 4th decimal.
 
-One pass, scored on OOF. Each shift alone is 0.05–0.13 ft worse than no shift; their errors are highly correlated
-(0.96–0.998).
+**Expected on the final members:** 5.136 (V2-XL), 5.157 (V2-L), 5.252 (V2-L small), 5.260 (L2); blend **5.038**. Not
+yet run from the package; see [docs/PORTING.md](../../docs/PORTING.md).
+
+## The notebook of record
+
+`ENSEMBLE_OOF_postproc.ipynb` did more than the blend: a check of whether a well's error depends on its distance to
+the fold's training wells, PhaseJitter TTA scored on OOF, and the cost of fp16 inference. Only the blend and the
+correlations were ported. Its one saved result, PhaseJitter TTA on the V2-L member (one pass, OOF):
 
 | combination | CV | cost |
 |---|---|---|
@@ -32,8 +33,6 @@ One pass, scored on OOF. Each shift alone is 0.05–0.13 ft worse than no shift;
 | best subset, fold-rotated | 5.2859 | +0.025 |
 | free weights, fold-rotated | 5.2817 | +0.021 |
 
-No cheaper subset passed the bar set in the notebook (at least 4 shifts and at least 0.02 ft saved). That left one
-choice: no TTA (the CV bet) or all 8 shifts (the test-set bet, which had gained about 0.26 ft on the public board on
-earlier lines). The final submission went without TTA.
-
-The member OOF tables and the blend weights from section 12 were not saved with the notebook.
+Each shift alone is 0.05–0.13 ft worse than no shift, and their errors correlate at 0.96–0.998. No cheaper subset
+passed the notebook's bar (at least 4 shifts and 0.02 ft saved). The choice was no TTA (the CV bet) or all 8 shifts
+(the test-set bet, worth about 0.26 ft on the public board on earlier lines); the final submission went without.

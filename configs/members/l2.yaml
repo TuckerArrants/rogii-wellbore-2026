@@ -1,0 +1,16 @@
+base: base.yaml
+name: l2
+notes: >-
+  EfficientNet-L2 (NoisyStudent), 256x512, no unrolling, deployed at k=1. Full CV 5.260.
+  Seed 238 was replaced by 272 in this run. checkpoint_k=1 is inferred from the deployment
+  depth (the summary does not record it).
+model: {encoder: tu-tf_efficientnet_l2.ns_jft_in1k_475}
+aug: {md_warp_strength_ref: 0.42, bedwarp_strength_ref: 0.42}
+train:
+  seeds: [34, 68, 102, 136, 170, 204, 272]
+  finetune_epochs: 30
+  patience: 12
+  unroll_p: 0.0
+  unroll_round_sup_weight: null
+  checkpoint_k: 1
+  deploy_k_log: []

@@ -8,7 +8,9 @@ Start here if you are new to the project:
 
 Records:
 
-- [LEADERBOARD.md](LEADERBOARD.md): the CV line from ~12 ft to the final members, every recorded public score, and
-  the final private result.
+- [LEADERBOARD.md](LEADERBOARD.md): the CV line from ~12 ft to the final ensemble (5.038), every recorded public score,
+  and the final private result.
 - [VALIDATION.md](VALIDATION.md): how folds were built, how a result was read, how the leaderboard's noise was priced,
   and the two places where CV did not describe the test set.
+- [PORTING.md](PORTING.md): how the notebooks became the `rogii_wellbore` package, what the tests check against the
+  notebooks, the deliberate differences, and what is still owed.

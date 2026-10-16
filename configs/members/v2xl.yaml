@@ -1,0 +1,5 @@
+base: base.yaml
+name: v2xl
+notes: EfficientNetV2-XL, 256x512, unrolled k=3. Full CV 5.136 (summary of record).
+model: {encoder: tu-tf_efficientnetv2_xl.in21k_ft_in1k}
+train: {patience: 12}

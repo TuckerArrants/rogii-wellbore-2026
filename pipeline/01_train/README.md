@@ -1,47 +1,56 @@
-# 01 · Training
+# 01 · Training a member
 
-`2SUNET_MASTER.ipynb` trains one ensemble member end to end: data, folds, synthetic pool, pretraining, fine-tuning,
-out-of-fold evaluation, and the files the Kaggle notebook needs. The four final members were all trained from this
-notebook, changing only the settings listed below. **As run, outputs stripped.**
+**Code:** `rogii_wellbore.run` (with `cv`, `synth`, `image`, `augment`, `model`, `train`, `oof`, `metrics`).
+**Configs:** `configs/members/{v2xl,v2l,v2l_small,l2}.yaml`. **Driver:** `train_colab.ipynb`.
+**Notebook of record:** `2SUNET_MASTER.ipynb`, as run, outputs stripped. Every function the package uses was
+checked against it ([docs/PORTING.md](../../docs/PORTING.md)).
 
-**Runs on:** Colab with a GPU, Google Drive mounted. Reads the competition zip from
-`MyDrive/Kaggle/ROGII-Wellbore/`, caches Hugging Face encoder weights there (`hf_home/`), and writes each run to a
-folder named after its settings (for example `5fold_effnetv2_l_stack2_ema_25000pt_mdwarp36_bedwarp36_unroll50_deepsup_handoffT15_expa_pt`).
+```bash
+python -m rogii_wellbore.run --config configs/members/v2l.yaml --data-root <unzipped data> --out <runs dir> \
+    [--pretrained-dir <folder with pretrain_f*_s*_ep5.pt>] [--folds 0 1] [--seeds 34 68]
+```
 
-**State of the saved copy:** the notebook was last saved after a probe (EfficientNetV2-L at 288 × 576, fold 0 only,
-CV 5.492, null). Its settings cell shows that probe, not a final member. Each member's exact settings are in the
-`ft39l_summary.json` in its run folder ([ARTIFACTS.md](../../ARTIFACTS.md)).
+## What a run does
 
-## What the notebook does, section by section
-
-| section | cells | what happens |
-|---|---|---|
-| setup | 0–3 | mount Drive; fetch encoder weights once into a Drive cache; unzip data; the settings cell; Hugging Face token from the Colab secret `HF_TOKEN` |
-| 1 · data and folds | 5 | list the 773 wells; 5 folds stratified by each well's TVT range |
-| 2 · synthetic pool | 7–11 | the synthetic well generator (drift, noise, faults, unconformities, dip breaks, repeated sections); planted-scenario checks run before any pool is built; one pool per fold from that fold's training typewells only; a hard leakage assert on every pool; a check that the pool's GR-matching difficulty landed on target |
-| 3 · images | 13–14 | turn every real and synthetic well into a 5-channel 256 × 512 image (see [GLOSSARY.md](../../docs/GLOSSARY.md)) |
-| 4 · dataset | 16 | training frames: anchor jitter, MDwarp, BedWarp, HFlip, HintDrop, each on its own random stream |
-| 5 · model | 18–20 | the two-stage U-Net (`smp.Unet` with a `timm` encoder, decoder channels 512→32); stage 2 reads the image plus stage 1's tempered probability map |
-| 6 · train and eval | 22–24 | the decode (probability-weighted row → TVT); pretrain 5 epochs on synthetic wells, fine-tune 30–35 epochs on real wells with EMA weights, unrolled refeed rounds and early stopping |
-| §C · results | 26–34 | the seed ensemble per fold and full-CV; per-seed OOF files; offset/drift split; tail counts; error by position along the well; per-fold heel/toe; residual modes |
-| §D · artifacts | 36–37 | `ft39l_summary.json` (settings and all metrics), `ft39l_kaggle_inference_manifest.json` (what the Kaggle notebook checks), fold splits, checkpoints; mirrored to Drive |
+1. **Folds.** `cv.make_folds(seed=34)`: 5 folds stratified by whole-well TVT range (153/153/153/153/161 validation
+   wells). Written to `fold_splits.json` with each fold's constant baseline.
+2. **Images.** Every real well is rendered once at the config's geometry (`image.build_image`).
+3. **Per fold, per seed (one job):**
+   - **Pretraining**, unless `--pretrained-dir` holds `pretrain_f{fold}_s{seed}_ep5.pt`. The fold's pool (25,000
+     synthetic wells from its training typewells; `synth.build_pool`) is built once per fold, audited for leakage,
+     and rendered; 5 epochs, AdamW 1e-3 / wd 1e-3, cosine, no EMA, HFlip off. The last two epochs are saved.
+   - **Fine-tuning** on the fold's real training wells: fresh AdamW and cosine, EMA 0.997, batch 8, gradient clip 5,
+     bf16 autocast; anchor jitter ±12 rows, HFlip 0.5, HintDrop 0.3, MDwarp and BedWarp at p 0.5. Unrolled members
+     run stage 2 for k ∈ {2, 3, 4} rounds on half the steps, with a 0.5-weighted loss on the intermediate rounds.
+     After each epoch the EMA weights are scored on the validation wells at k = 1 and at the deployment depths; the
+     best epoch at `checkpoint_k` is kept, and training stops after `patience` epochs without improvement.
+   - Writes `ckpt_f{fold}_s{seed}.pt` and `result_f{fold}_s{seed}.npz`. A re-run skips finished jobs.
+4. **OOF and summary.** Each checkpoint predicts its fold's validation wells at `checkpoint_k`
+   (`oof_f{fold}_s{seed}.npz`); the seeds are averaged per fold; `summary.json` holds per-fold and full-CV scores with
+   the offset/drift, tail and position diagnostics; `<name>_kaggle_inference_manifest.json` is what stage 03 reads.
 
 ## The four final members
 
-All: 5 folds × 7 seeds (35 checkpoints), 5 input channels, synthetic pretraining on 25,000-well pools with event
-pack A, two-stage U-Net with deep supervision 0.5, handoff temperature 1.5, learning rate 1e-3, weight decay 1e-3,
-batch 8, EMA 0.997, HFlip 0.5, HintDrop 0.3.
+All: 5 folds × 7 seeds (35 checkpoints), pretrained on 25,000-well pools with event pack A, handoff temperature 1.5,
+deep supervision 0.5.
 
-| member | encoder | image | MDwarp / BedWarp strength | unroll | fine-tune epochs | full-CV |
+| config | encoder | image | MDwarp / BedWarp | unroll, depth | fine-tune epochs / patience | full-CV of record |
 |---|---|---|---|---|---|---|
-| V2-XL | `tu-tf_efficientnetv2_xl.in21k_ft_in1k` | 256 × 512, 1 ft rows | 0.36 / 0.36 | p 0.5, k 2–4 | 35 | 5.136 |
-| V2-L | `tu-tf_efficientnetv2_l.in21k_ft_in1k` | 256 × 512, 1 ft rows | 0.36 / 0.36 | p 0.5, k 2–4 | 35 | 5.157 |
-| V2-L small | `tu-tf_efficientnetv2_l.in21k_ft_in1k` | 224 × 448, 1.14 ft rows | 0.315 / 0.315 | p 0.5, k 2–4 | 35 | 5.252 |
-| L2 | `tu-tf_efficientnet_l2.ns_jft_in1k_475` | 256 × 512, 1 ft rows | 0.42 / 0.42 | none | 30 | 5.260 |
+| `v2xl` | `tu-tf_efficientnetv2_xl.in21k_ft_in1k` | 256 × 512, 1 ft rows | 0.36 / 0.36 | yes, k = 3 | 35 / 12 | 5.136 |
+| `v2l` | `tu-tf_efficientnetv2_l.in21k_ft_in1k` | 256 × 512, 1 ft rows | 0.36 / 0.36 | yes, k = 3 | 35 / 15 | 5.157 |
+| `v2l_small` | `tu-tf_efficientnetv2_l.in21k_ft_in1k` | 224 × 448, 1.14 ft rows | 0.315 / 0.315 | yes, k = 3 | 35 / 15 | 5.252 |
+| `l2` | `tu-tf_efficientnet_l2.ns_jft_in1k_475` | 256 × 512, 1 ft rows | 0.42 / 0.42 | no, k = 1 | 30 / 12 | 5.260 |
 
-Full-CV is over 773 wells and 3,783,989 rows; the constant baseline on the same rows is 15.910. Offset and drift
-are each about 3.6–3.7 ft on every member; the worst 10% of wells carry 58–60% of the squared error.
+Full-CV is over 773 wells and 3,783,989 rows; the constant baseline on the same rows is 15.910. Offset and drift are
+each about 3.6–3.7 ft on every member; the worst 10% of wells carry 58–60% of the squared error.
 
-**A recorded discrepancy:** the four summaries list `synth_pretrain_pool: 15`, a debug value of `N_SYNTH_PRETRAIN`
-that was in the notebook when they were written. The run folders are named for the 25,000-well pool, and the saved
-notebook now sets `N_SYNTH_PRETRAIN = 25000`. The field is kept as written.
+**Recorded quirks.** The four `ft39l_summary.json` files list `synth_pretrain_pool: 15`, a debug value of
+`N_SYNTH_PRETRAIN` that was in the notebook when they were written; the run folders are named for the 25,000-well
+pool, the saved notebook sets 25,000, and so does the config. The L2 run used seed 272 in place of 238. Its
+`checkpoint_k: 1` is inferred from how it was deployed; the summary does not record it.
+
+## The notebook of record
+
+The saved `2SUNET_MASTER.ipynb` was last run as a probe (EfficientNetV2-L at 288 × 576, fold 0 only, CV 5.492,
+null), so its settings cell shows that probe. It still holds the switched-off experiments the package dropped
+(listed in [docs/PORTING.md](../../docs/PORTING.md)).

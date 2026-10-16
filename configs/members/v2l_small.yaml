@@ -1,0 +1,6 @@
+base: v2l.yaml
+name: v2l_small
+notes: >-
+  EfficientNetV2-L at 224x448 (bin 256/224 ft), unrolled k=3. Warp strengths and
+  autocorrelations scale with the geometry (0.315, 112 cols; 0.315, 56 rows). Full CV 5.252.
+geometry: {H: 224, W: 448, bin_size: 1.1428571428571428, k_max: 12}

@@ -1,0 +1,42 @@
+# Shared by the four final members. Values are the training notebook's settings of record
+# (2SUNET_MASTER.ipynb) and the members' ft39l_summary.json files; see configs/README.md.
+geometry: {H: 256, W: 512, bin_size: 1.0, k_max: 12}
+cv: {seed: 34, n_folds: 5}
+synth:
+  n_wells: 25000
+  corruption: clean
+  event_pack: v3_expA
+  dipbreak_prob: 0.35
+  repeat_prob: 0.12
+  pinch_prob: 0.0
+aug:
+  h_flip_p: 0.5
+  h_flip_p_pretrain: 0.0
+  hint_drop_p: 0.3
+  md_warp_p: 0.5
+  md_warp_strength_ref: 0.36
+  bedwarp_p: 0.5
+  bedwarp_strength_ref: 0.36
+model:
+  decoder_channels: [512, 256, 128, 64, 32]
+  decoder_interp: nearest
+  drop_path_rate: 0.2
+  detach_handoff: true
+  handoff_t: 1.5
+  refeed_t: 1.0
+train:
+  folds: [0, 1, 2, 3, 4]
+  seeds: [34, 68, 102, 136, 170, 204, 238]
+  pretrain_epochs: 5
+  finetune_epochs: 35
+  lr: 0.001
+  wd: 0.001
+  batch_size: 8
+  ema_decay: 0.997
+  deep_sup_weight: 0.5
+  amp: bfloat16
+  unroll_p: 0.5
+  unroll_k_choices: [2, 3, 4]
+  unroll_round_sup_weight: 0.5
+  checkpoint_k: 3
+  deploy_k_log: [2, 3]
