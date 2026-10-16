@@ -1,0 +1,42 @@
+# --- data and model artifacts: these live on Kaggle datasets / Google Drive, never in git ---
+*.u8
+*.npz
+*.npy
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.onnx
+*.parquet
+*.csv
+*.pkl
+*.tar
+*.zip
+*.dcm
+data/
+# small committed test fixtures (public tokenizer files, a package manifest); *.parquet / *.csv stay ignored
+!tests/data/
+runs/
+outputs/
+mmcache/
+wandb/
+
+# --- secrets ---
+.env
+kaggle.json
+*.pem
+
+# --- python / jupyter noise ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+.pytest_cache/
+build/
+dist/
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/
