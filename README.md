@@ -7,6 +7,7 @@ in feet. The problem and the data: [docs/TASK.md](docs/TASK.md). Words used thro
 [docs/GLOSSARY.md](docs/GLOSSARY.md).
 
 **Result: 26th place, private leaderboard RMSE 6.600; cross-validation 5.038 for the submitted ensemble.**
+Write-up on Kaggle: [26th place solution: stacked U-Net, synthetic wells](https://www.kaggle.com/competitions/rogii-wellbore-geology-prediction/writeups/26th-place-solution-stacked-unet-synthetic-wel).
 
 In plain words: an oil well is drilled down, then turned to run sideways through a thin layer of rock for a mile or
 more. To keep it in the layer, a geologist compares the gamma-ray readings taken along the well with a reference log

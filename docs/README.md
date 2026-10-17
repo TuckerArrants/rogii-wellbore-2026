@@ -2,6 +2,8 @@
 
 Start here if you are new to the project:
 
+- [The write-up on Kaggle](https://www.kaggle.com/competitions/rogii-wellbore-geology-prediction/writeups/26th-place-solution-stacked-unet-synthetic-wel): the solution in one post.
+
 - [TASK.md](TASK.md): the competition, the data, what the labels are, and what makes it hard.
 - [GLOSSARY.md](GLOSSARY.md): the words the rest of the repo uses without explaining.
 - [WHAT_DIDNT_WORK.md](WHAT_DIDNT_WORK.md): ideas we measured and dropped.
