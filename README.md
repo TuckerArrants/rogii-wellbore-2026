@@ -61,25 +61,64 @@ Few teams set the problem up this way.
    pretrains for 5 epochs on synthetic wells, then fine-tunes for up to 35 on real wells with EMA weights; the best
    epoch at the deployment depth is kept. Three of the four members run three rounds; the L2 runs one.
 5. **Ensemble and submission** (`eval`, `infer`). Four members (EfficientNetV2-L at two image sizes,
-   EfficientNetV2-XL, EfficientNet-L2), each 5 folds × 7 seeds, averaged with equal weights, no test-time
-   augmentation.
+   EfficientNetV2-XL, EfficientNet-L2), each 5 folds × 7 seeds, averaged with equal weights.
 
 About half of the remaining error is one constant offset per well that the inputs do not pin down: the logs can match
-almost as well several feet higher or lower. What was tried against it, and the mistakes caught along the way:
+almost as well several feet higher or lower. What was tried against it:
 [docs/WHAT_DIDNT_WORK.md](docs/WHAT_DIDNT_WORK.md).
 
 ## Results
 
 | | CV (773 wells) | private LB |
 |---|---|---|
-| **final ensemble: 4 members, equal weights, no TTA** | **5.038** | **6.600 (26th)** |
+| **final ensemble: 4 members, equal weights** | **5.038** | **6.600 (26th)** |
 | member: EfficientNetV2-XL | 5.136 | |
 | member: EfficientNetV2-L | 5.157 | |
 | member: EfficientNetV2-L, 224 × 448 | 5.252 | |
 | member: EfficientNet-L2 | 5.260 | |
+| *not submitted:* EfficientNetV2-XL with the neighbour prior, one model | 5.027 | would have placed **7th** |
 
 How the CV line came down from about 12 ft, every recorded leaderboard score, and why the private score sits above CV:
 [docs/LEADERBOARD.md](docs/LEADERBOARD.md).
+
+## The best model we did not submit
+
+The final ensemble left out one input: a **neighbour prior**. Nearby training wells show how the rock layer tilts in
+each place. The prior reads those tilts along the new well's path (from the closest pieces of neighbouring wells,
+corrected for the direction the well runs) and adds them up from the well's last known position. On its own it is a
+rough guess: 13.3 ft in CV, against 15.9 for a constant. Drawn as a soft band in one more channel (the 7th input to
+stage 2, after the five base channels and stage 1's guess), it gave the U-Net a second opinion on where the line
+should go. A learned gate at the output decided how much to trust it.
+
+It took a single EfficientNetV2-XL (5 folds × 5 seeds) from 5.180 to **5.027**, the best CV of the project. Then we
+dropped it. Three things pointed the same way:
+
+- **The public board.** On its roughly 50 wells, the model scored 6.2 with the prior and 5.7 with the prior channel
+  blanked. The prior alone scored 24.7, against 13.3 in CV.
+- **A plausible story.** Random folds put each validation well's neighbours in the training set. If the test wells
+  sit further from the training wells, a neighbour feature looks better in CV than it is. That seemed to explain the
+  board.
+- **A harder CV that agreed.** Folds that held out whole regions scored the prior alone at 51 ft. But those folds were
+  weighted to reproduce the 24.7 public score, so they could not check it; they repeated it.
+
+It looked too good to be true, so we checked for leakage and found none: the prior's inputs were the same numbers at
+training and at test. We dropped it anyway, on 18 July, and built the final ensemble without it.
+
+The private board, the other three quarters of the test wells, went the other way. The 5.027 model would have placed
+7th, and every submission that used the prior, as the 7th channel or as a simple blend with the model's output,
+scored much better than the final ensemble. Its Kaggle notebook is kept as
+[`pipeline/03_submit/stacked-unet-inference.ipynb`](pipeline/03_submit/stacked-unet-inference.ipynb); it is not
+ported to the package.
+
+What we take from it:
+
+- **About 50 wells should not overrule CV on 773.** Our own simulation put one public score at ±0.85 ft, and we
+  acted on a 0.5 ft gap.
+- **"Too good to be true" is a reason to look for a leak, not a verdict.** Once the leak check came back clean, the CV
+  result should have stood.
+- **A check tuned to agree with a number cannot confirm it.**
+
+This was the most costly decision of the project.
 
 ## Pipeline
 
@@ -87,7 +126,7 @@ How the CV line came down from about 12 ft, every recorded leaderboard score, an
 |---|---|---|---|---|---|
 | 01 | [train a member](pipeline/01_train/) | `rogii_wellbore.run` (cv, synth, image, augment, model, train, oof) | `configs/members/<member>.yaml` | `train_colab.ipynb` | `2SUNET_MASTER.ipynb` |
 | 02 | [score members and the blend](pipeline/02_ensemble/) | `rogii_wellbore.eval` | `configs/eval/final_blend.yaml` | `eval_colab.ipynb` | `ENSEMBLE_OOF_postproc.ipynb` |
-| 03 | [Kaggle submission](pipeline/03_submit/) | `rogii_wellbore.infer` | `configs/submit/final_equal_weight.yaml` | `submit_kaggle.ipynb` | `final-submission-equal-weight-no-tta.ipynb` |
+| 03 | [Kaggle submission](pipeline/03_submit/) | `rogii_wellbore.infer` | `configs/submit/final_equal_weight.yaml` | `submit_kaggle.ipynb` | `final-submission-equal-weight-no-tta.ipynb`; `stacked-unet-inference.ipynb` (not submitted) |
 
 ## Layout
 

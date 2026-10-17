@@ -4,14 +4,14 @@ Start here if you are new to the project:
 
 - [TASK.md](TASK.md): the competition, the data, what the labels are, and what makes it hard.
 - [GLOSSARY.md](GLOSSARY.md): the words the rest of the repo uses without explaining.
-- [WHAT_DIDNT_WORK.md](WHAT_DIDNT_WORK.md): ideas we measured and dropped, and mistakes we caught.
+- [WHAT_DIDNT_WORK.md](WHAT_DIDNT_WORK.md): ideas we measured and dropped.
 
 Records:
 
 - [LEADERBOARD.md](LEADERBOARD.md): the CV line from ~12 ft to the final ensemble (5.038), every recorded public score,
-  and the final private result.
+  the final private result, and the better submission we did not pick.
 - [VALIDATION.md](VALIDATION.md): how folds were built, how a result was read, how the leaderboard's noise was priced,
-  and the two places where CV did not describe the test set.
+  and the two places where CV and the public board disagreed.
 - [PORTING.md](PORTING.md): how the notebooks became the `rogii_wellbore` package, what the tests check against the
   notebooks, the deliberate differences, and what is still owed.
 

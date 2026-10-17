@@ -1,6 +1,6 @@
 # Validation
 
-How a change was judged, and the two places where cross-validation turned out not to describe the test set.
+How a change was judged, and how the public leaderboard was read.
 
 ## Cross-validation
 
@@ -32,20 +32,19 @@ How a change was judged, and the two places where cross-validation turned out no
 - **Its noise was measured, not guessed.** Drawing 50-well subsets from our own OOF errors: one public score is
   uncertain by about ±0.85 ft (one standard deviation); two submissions of related models differ by chance by about
   0.16 ft. At that size, a real 0.1 ft improvement is a one-sigma read. CV decided model changes; the board was used
-  for gross checks.
+  for gross checks. The one time the board overruled CV, it was wrong (below).
 - **It was also used as an instrument.** The kernel cannot return test data, but the score can encode one number per
   submission. Adding a large constant to the predictions of wells that meet some condition, and reading the score,
   measures what share of the public rows meet it. This is how the off-grid test wells were found: about 16% of test
   wells do not sit on the 1.0 ft MD grid that every training well uses.
 
-## Where CV and the test set came apart
+## Where CV and the public board disagreed
 
-1. **The MD grid.** Training wells are all on one grid, so no CV can reward robustness to grid shift. PhaseJitter TTA
-   cost about 0.04 ft on CV and improved the public score by about 0.26 ft, twice, on two different model lines.
-   The final submission did not use it (see [LEADERBOARD.md](LEADERBOARD.md)).
-2. **Neighbour wells.** A feature built from nearby training wells (a spatial prior on the formation surface)
-   improved CV from 5.18 to 5.03, then scored worse on the leaderboard with it switched on (6.2) than off (5.7).
-   Random folds put a validation well's neighbours in the training set; the test wells are further from the training
-   wells than that. The rule that came out of it: anything built from other wells is priced on folds that hold out
-   whole regions, and checked against the board before it is trusted. The spatial feature was dropped, and the final
-   ensemble does not use it.
+1. **The MD grid.** Every training well sits on an exact 1.0 ft MD grid; about 16% of test wells do not. No CV can
+   show how a model handles that.
+2. **The neighbour prior.** A guess built from nearby training wells, given to the model as an extra channel, took
+   the best single model from 5.18 to 5.03 in CV. On the public board it scored worse with the prior (6.2) than
+   with it blanked (5.7), and the prior alone scored 24.7 against 13.3 in CV. We concluded that random folds
+   overstate anything built from neighbours, built region-held-out folds that agreed (they had been weighted to
+   reproduce the public score), and dropped the prior. The private board showed the opposite: that model would have
+   placed 7th. The full account: [the top-level README](../README.md#the-best-model-we-did-not-submit).

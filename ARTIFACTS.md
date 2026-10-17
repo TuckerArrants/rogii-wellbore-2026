@@ -10,6 +10,7 @@ Everything the notebooks read or wrote that is not in git.
 | offline wheels | [tuckerarrants/smp-offline](https://www.kaggle.com/datasets/tuckerarrants/smp-offline) | `segmentation_models_pytorch` 0.5.0, `timm` 1.0.27 | 03 |
 | V2 members | [tuckerarrants/rogii-v2s](https://www.kaggle.com/datasets/tuckerarrants/rogii-v2s) | V2-XL, V2-L and V2-L small: 35 checkpoints each + `ft39l_kaggle_inference_manifest.json` | 03 |
 | L2 member | [tuckerarrants/rogii-l2](https://www.kaggle.com/models/tuckerarrants/rogii-l2) (PyTorch, `default`, version 1) | L2: 35 checkpoints + manifest | 03 |
+| neighbour-prior model (not submitted) | `tuckerarrants/rogii-unet` | EfficientNetV2-XL with the neighbour prior: 25 checkpoints + manifest, CV 5.027 | `pipeline/03_submit/stacked-unet-inference.ipynb` |
 | repo code | `tuckerarrants/rogii-wellbore-src` (not yet uploaded) | `src/rogii_wellbore` + `configs/`, built by `scripts/make_kaggle_src.py` | 03 driver |
 
 ## Google Drive (`MyDrive/Kaggle/ROGII-Wellbore/`)

@@ -23,16 +23,4 @@ yet run from the package; see [docs/PORTING.md](../../docs/PORTING.md).
 ## The notebook of record
 
 `ENSEMBLE_OOF_postproc.ipynb` did more than the blend: a check of whether a well's error depends on its distance to
-the fold's training wells, PhaseJitter TTA scored on OOF, and the cost of fp16 inference. Only the blend and the
-correlations were ported. Its one saved result, PhaseJitter TTA on the V2-L member (one pass, OOF):
-
-| combination | CV | cost |
-|---|---|---|
-| no shift (single pass) | 5.2606 | — |
-| all 8 shifts averaged | 5.3011 | +0.041 |
-| best subset, fold-rotated | 5.2859 | +0.025 |
-| free weights, fold-rotated | 5.2817 | +0.021 |
-
-Each shift alone is 0.05–0.13 ft worse than no shift, and their errors correlate at 0.96–0.998. No cheaper subset
-passed the notebook's bar (at least 4 shifts and 0.02 ft saved). The choice was no TTA (the CV bet) or all 8 shifts
-(the test-set bet, worth about 0.26 ft on the public board on earlier lines); the final submission went without.
+the fold's training wells, and the cost of fp16 inference. Only the blend and the correlations were ported.

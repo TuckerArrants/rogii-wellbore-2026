@@ -18,7 +18,7 @@ with one YAML per member replacing the notebook's global settings. The notebooks
 | `2SUNET_MASTER` (24, 27, 29) | job loop with resume, seed ensemble, per-seed OOF | `run.py`, `oof.py` |
 | `2SUNET_MASTER` (30-37) | offset/drift, tail, position, modes, summary, manifest | `metrics.py`, `run.summarize`, `run.manifest` |
 | `ENSEMBLE_OOF_postproc` (12) | member correlation and blend | `eval.py` |
-| Kaggle (3, 4, 7-10) | member registry and checks, batched loading, PhaseJitter TTA, blend, submission | `infer.py`, `configs/submit/*.yaml` |
+| Kaggle (3, 4, 7-10) | member registry and checks, batched loading, blend, submission | `infer.py`, `configs/submit/*.yaml` |
 
 ## What the tests check
 
@@ -29,7 +29,7 @@ All on CPU, without the competition data (`tests/conftest.py` writes a small fak
 |---|---|
 | `test_parity_data` | fold split equal; synthetic wells equal for 150 seeds in three settings (the members' pool, event pack off, noisy corruption with the dormant pinch switched on); generator inputs equal; rendered images equal at 256 × 512, 224 × 448 and 64 × 128, at five anchor-jitter offsets |
 | `test_parity_train` | fine-tuning samples equal (all augmentations, two geometries, two epochs); pretraining and validation samples equal; model outputs equal for forward, evaluation refeed to k = 4 and training unroll with its intermediate rounds, at three temperature settings; unroll draws and loss equal; **two full fine-tuning epochs** (EMA, unrolling, round supervision, k = 3 selection) give equal epoch scores, best state and final weights |
-| `test_parity_infer` | Kaggle image equal at two geometries; refeed equal; per-well member prediction equal at k = 1, k = 3, and k = 3 with PhaseJitter TTA |
+| `test_parity_infer` | Kaggle image equal at two geometries; refeed equal; per-well member prediction equal at k = 1 and k = 3 |
 | `test_pipeline` | member configs name their Drive/Kaggle run folders and match the recorded recipes; a full member run (pool, pretraining, fine-tuning, OOF, summary, manifest) on fake data; resume; `eval` reproduces the training score exactly with the data and within 0.001 without it; `infer` writes a complete submission and refuses a temperature that disagrees with the manifest |
 
 ## Deliberate differences
@@ -48,11 +48,14 @@ All on CPU, without the competition data (`tests/conftest.py` writes a small fak
 
 ## Not ported
 
-Switched off in every final member, so left in the notebook: vertical shear, PhaseJitter / ToeCrop / GR augmentation
+Switched off in every final member, so left in the notebook: vertical shear, ToeCrop / GR augmentation
 during training, the fault-zone event bundle, posterior MD dilation, multi-scale posterior injection, warm restarts,
 cycle-aware EMA, the integral-regression loss, learning-rate warmup, the single-U-Net path, the per-fold pretraining
 donor (`REUSE_PT`), and the planted-scenario smoke cells. Knowledge distillation had already been removed from the
-notebook (see [WHAT_DIDNT_WORK.md](WHAT_DIDNT_WORK.md)). Each is recorded in the ledger with its result.
+notebook. Each is recorded in the ledger with its result.
+
+The neighbour-prior model (`pipeline/03_submit/stacked-unet-inference.ipynb`) is kept as its Kaggle notebook only.
+Its training notebook is not in the repo, and neither is ported.
 
 ## Still owed
 

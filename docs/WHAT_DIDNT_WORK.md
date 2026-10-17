@@ -1,6 +1,6 @@
 # What didn't work
 
-Ideas we measured and dropped, and mistakes we caught. Numbers are RMSE in feet; lower is better. "CV" is the
+Ideas we measured and dropped. Numbers are RMSE in feet; lower is better. "CV" is the
 5-fold out-of-fold score. Results are quoted against the baseline of their time, which fell from about 12 ft to about
 5.1 ft over the project, so compare numbers within a row, not across rows. Terms: [GLOSSARY.md](GLOSSARY.md).
 
@@ -17,7 +17,10 @@ could think of; none of these moved it.
 | **Use the label formula** (TVT = −Z + C) directly | Assuming the layer stays flat: 101 ft. A shared surface: 122 ft. A local plane fitted on each well: 76 ft. The model at the time: about 5.6 |
 | **Shift, shrink or re-anchor each well's prediction** | Capped at about 0.1 ft. The error is not a constant offset: it grows from heel to toe |
 | **Test-time training on each test well's known rows** | Made things worse (+2.15 ft on typical wells). How well a model fits a well's known rows says nothing about the rows after them |
-| **Neighbour wells as an input** (spatial prior) | Better CV (5.18 → 5.03), worse leaderboard (6.2 against 5.7 without it). Random folds overstate anything built from nearby wells; details in [VALIDATION.md](VALIDATION.md) |
+
+One idea from this family did work, and we dropped it: the neighbour prior, a guess built from nearby wells and fed
+to the model as an extra channel. It is not on this page because it should not have been dropped; see
+[the top-level README](../README.md#the-best-model-we-did-not-submit).
 
 ## Matching the logs
 
@@ -35,7 +38,6 @@ could think of; none of these moved it.
 |---|---|
 | **Extra loss terms** (auxiliary heads, consistency between views, per-well loss weights) | 0 for 9. Per-well weighting looked good on fold 4 (−0.17) and failed on fold 0 (+0.30), the fold it was designed for |
 | **A wider decoder** | 2× the default width was the best measured. 3× was worse by 1.04 ft per seed |
-| **Other backbones** (ConvNeXtV2 and similar patch-stem networks, ResNet-50, MiT, U-Net++, DeepLabV3+, FPN) | None beat EfficientNet on this image format. The patch-stem networks were given their own learning-rate recipe first and still lost |
 | **SAM optimizer** | Slightly worse on the worst wells |
 | **Freeze the encoder during fine-tuning** | 12.76 against 8.00 |
 | **Self-supervised pretraining** (masked GR) | About 12.8 against 8.85 for synthetic supervised pretraining: the network learned a shortcut instead of the task |
@@ -47,25 +49,5 @@ could think of; none of these moved it.
 | idea | what happened |
 |---|---|
 | **Horizontal-flip TTA** | The flipped prediction differs from the plain one (0.69 ft on average) and averaging them hurt |
-| **Shift-by-part-of-a-row TTA** (PhaseJitter) | −0.04 ft on CV, +0.26 ft on the public board, twice: a test-set effect from the off-grid wells. Not in the final submission |
 | **GR gain/offset TTA** | Every setting hurt (+0.41 for the average of nine) |
 | **Refeed deeper than k = 2** without training for it | Better on average, but worse on single folds and on the worst wells. Unrolled training is what made k = 3 safe |
-
-## Mistakes we caught
-
-- **A distillation gain that was leakage.** Training each model to also match the averaged predictions of three
-  earlier models scored 5.477 against 5.592, the best result at the time. But those earlier models had been trained on
-  the validation wells of the model being scored. Three versions that removed that exposure (nested folds, shuffled
-  targets, teachers that saw neither fold) each gave back the whole gain. The result was retracted.
-- **A three-fold pass that reversed.** Column masking passed on three folds and failed all four checks on five.
-  Since then, nothing has been adopted without five folds.
-- **A "3-sigma" leaderboard surprise that was 1.7 sigma.** The board noise had been guessed, two to three times too
-  small. Measured from our own errors, the surprise was ordinary. Board noise is now always simulated
-  ([VALIDATION.md](VALIDATION.md)).
-- **A grid assumption nobody had checked.** That training wells sit on an exact 1 ft MD grid was taken from a data
-  summary. Checked well by well, it held for all 773 (3.78 million steps), which is what made the off-grid test wells
-  a clean finding.
-- **Settings that silently did nothing.** Loading saved pretraining checkpoints skips pretraining, so a changed
-  synthetic-pool setting has no effect; and a debug value (`N_SYNTH_PRETRAIN = 15`) stayed in the notebook under
-  the line meant to remove it. Both were caught before a run was spent on them. The fix is an assert, not care: any
-  pool setting fails loudly when pretraining is being reused.

@@ -23,13 +23,15 @@ score is uncertain by about ±0.85 ft, and two related submissions differ by cha
 | Jun | decoder 2× wider | ~6.1 | |
 | late Jun | synthetic pool 7,500 → 15,000 wells | 5.80 | |
 | late Jun | EfficientNetV2-L, stronger augmentation | 5.691 | |
-| 2 Jul | EfficientNetV2-XL, 25,000-well pool | 5.592 | 5.444 (with TTA) |
+| 2 Jul | EfficientNetV2-XL, 25,000-well pool | 5.592 | 5.444 |
 | 11 Jul | augmentation strengths re-tuned on the new line | 5.474 | |
 | 11 Jul | rebuilt pool + dip breaks and repeated sections (event pack A) | 5.307 | |
 | 12 Jul | unrolled training + supervision of every round, k = 3 | 5.180 | |
-| 16–17 Jul | + spatial prior from neighbour wells | 5.027 | 6.2 (prior on), 5.7 (prior off) |
+| 16–17 Jul | + neighbour prior as an extra channel, with a learned gate | 5.027 | 6.2 (prior on), 5.7 (prior blanked) |
 
-The spatial prior was then dropped ([VALIDATION.md](VALIDATION.md)); the final ensemble does not use it.
+The neighbour prior was then dropped on the public board's reading, and the final ensemble does not use it. That was a
+mistake: on the private board this model would have placed 7th
+([the top-level README](../README.md#the-best-model-we-did-not-submit)).
 
 ## The final ensemble
 
@@ -43,31 +45,24 @@ temperature 1.5, trained late July to early August.
 | `l_hT15_k3_small` | EfficientNetV2-L | 224 × 448 | k = 3, unrolled | 5.252 |
 | `l2_hT15_k1` | EfficientNet-L2 | 256 × 512 | k = 1 | 5.260 |
 
-Submitted as an equal-weight average (0.25 each), no TTA:
+Submitted as an equal-weight average (0.25 each):
 
 | submission | CV | private LB |
 |---|---|---|
 | `final-submission-equal-weight-no-tta` | 5.038 | **6.600 — 26th place** |
 
-## Other recorded public scores
+## The submission we did not pick
 
-These are from the July inference work on the 5.592 / 5.477 lines (the 5.477 line was later retracted as leakage; see
-[WHAT_DIDNT_WORK.md](WHAT_DIDNT_WORK.md)).
+| submission | CV | public LB | private LB |
+|---|---|---|---|
+| `stacked-unet-inference`: EfficientNetV2-XL with the neighbour prior, 5 folds × 5 seeds | **5.027** | 6.2 | would have placed **7th** |
 
-| submission | public LB | note |
-|---|---|---|
-| distillation line, one pass | 5.821 | |
-| same, two refeed rounds pooled across seeds | 5.864 | the CV gain (−0.11) did not show on the board; within noise |
-| same, PhaseJitter TTA (8 grid shifts averaged) | **5.566** | best public score of these. TTA costs CV but helps the off-grid test wells; the same gap appeared on a second model line |
-| refeed + TTA together | 5.603 | |
-| TTA on high-uncertainty wells only | 5.738 | the TTA gain is spread over many wells |
-
-Probe submissions (built to measure a property of the test set, not to score well) are not listed.
+Every submission that used the neighbour prior, as an input channel or as a blend with the model's output, scored
+much better on the private board than the final ensemble.
 
 ## Why the private score is above CV
 
-The ensemble scores 5.038 on CV (members 5.14–5.26); the private leaderboard gave 6.600. The public board had run above CV for the
-later lines too (5.7 for a 5.03 CV line). Two differences between the test set and training were measured: about 16%
-of test wells are off the MD grid that every training well uses, and the test wells sit further from the training
-wells than random folds assume ([VALIDATION.md](VALIDATION.md)). How much of the gap each one explains, if any, was
-not measured.
+The ensemble scores 5.038 on CV (members 5.14–5.26); the private leaderboard gave 6.600. Two things are known. About
+16% of test wells are off the MD grid that every training well uses ([VALIDATION.md](VALIDATION.md)). And the
+neighbour-prior model, with almost the same CV (5.027), would have placed 7th: on the private wells, the prior was
+worth far more than the final ensemble's extra members. How much of the gap each explains was not measured.

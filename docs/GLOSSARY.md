@@ -24,6 +24,7 @@ Picture: [img/well_as_image.svg](img/well_as_image.svg).
 | **channels** | five per image: `TW_GR` (reference log down the rows), `HW_GR` (the well's log across the columns), `hint` (the known pre-PS rows marked), `cost volume` (squared GR difference between the two at every row and column), `dZ` (the well's dip per column) |
 | **cost volume** | the matching channel: low where the well's GR equals the reference log's GR at that depth. The single largest early gain |
 | **expected-row decode** | the prediction: in each column, the probability-weighted average row, converted back to TVT |
+| **neighbour prior, donors** | a rough guess of a well's TVT built from nearby training wells (the donors): how the layer tilts along the well's path, added up from its last known position. Drawn as a soft band in an extra channel. Used by the best single model (CV 5.027), not by the final ensemble; see [the README](../README.md#the-best-model-we-did-not-submit) |
 | **supervision window** | only ±128 ft around the PS depth is inside the image; truth outside it is not trained on |
 
 ## Models
@@ -51,7 +52,6 @@ Picture: [img/two_stage_unet.svg](img/two_stage_unet.svg).
 | **BedWarp** | augmentation: stretch and squeeze the layers in TVT (the reference log and the truth move together) |
 | **HFlip** | augmentation: mirror the well along MD (probability 0.5, fine-tuning only) |
 | **HintDrop** | augmentation: hide part of the known pre-PS rows (probability 0.3) |
-| **PhaseJitter** | shifting the TVT grid by part of a row. Tried as augmentation and as test-time averaging (TTA) |
 
 ## Evaluation
 
