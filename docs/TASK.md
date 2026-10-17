@@ -54,3 +54,9 @@ Predicting a constant from the PS point scores **15.9 ft**. The final models sco
    the gains came from synthetic data and augmentation. The test set differs from training in ways cross-validation
    cannot show: the off-grid wells above, and the test wells' positions relative to the training wells (stage notes
    in [VALIDATION.md](VALIDATION.md)).
+
+## How we approached it
+
+Each well is drawn as an image, so the task becomes tracing a line through a picture and image tools apply:
+pretrained U-Nets and as many synthetic training wells as needed. In two pictures: the
+[top-level README](../README.md#the-idea-draw-the-well-as-a-picture).

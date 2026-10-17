@@ -5,6 +5,11 @@
 **Notebook of record:** `2SUNET_MASTER.ipynb`, as run, outputs stripped. Every function the package uses was
 checked against it ([docs/PORTING.md](../../docs/PORTING.md)).
 
+![The five-channel image goes into the stage 1 U-Net, which gives a first guess of row probabilities. Stage 2 reads the image plus that guess and gives a sharper one, fed back in for three rounds. Below: training on 25,000 synthetic wells, then about 620 real wells, then four models averaged.](../../docs/img/two_stage_unet.svg)
+
+How a well becomes the image: [docs/img/well_as_image.svg](../../docs/img/well_as_image.svg) and the
+[top-level README](../../README.md#the-idea-draw-the-well-as-a-picture).
+
 ```bash
 python -m rogii_wellbore.run --config configs/members/v2l.yaml --data-root <unzipped data> --out <runs dir> \
     [--pretrained-dir <folder with pretrain_f*_s*_ep5.pt>] [--folds 0 1] [--seeds 34 68]

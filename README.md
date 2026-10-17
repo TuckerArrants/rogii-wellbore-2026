@@ -8,30 +8,65 @@ in feet. The problem and the data: [docs/TASK.md](docs/TASK.md). Words used thro
 
 **Result: 26th place, private leaderboard RMSE 6.600; cross-validation 5.038 for the submitted ensemble.**
 
+In plain words: an oil well is drilled down, then turned to run sideways through a thin layer of rock for a mile or
+more. To keep it in the layer, a geologist compares the gamma-ray readings taken along the well with a reference log
+from a nearby vertical well, and works out where the well sits in the layers. Each well's position is given up to a
+point (the PS point); the task is to predict the rest.
+
 The work was done in Colab and Kaggle notebooks between May and August 2026 and moved into this repo afterwards as the
 `rogii_wellbore` package. The notebooks of record are kept, as run, in `pipeline/`; the tests check the package against
 them function by function ([docs/PORTING.md](docs/PORTING.md)).
+
+## The idea: draw the well as a picture
+
+A geologist solves this by lining up two wiggly lines. We drew each well as an image instead:
+
+![Left: a cross-section with a vertical typewell and a horizontal well running through bent, dipping layers, known up to the PS point. Right: the same well as an image, where the layers become flat bands and the well becomes a line across them. Below: the five channels the network reads.](docs/img/well_as_image.svg)
+
+- Each **column** is a step along the well (512 columns). Each **row** is one foot of depth in the rock (256 rows,
+  centred on the last known position).
+- The reference log runs down the rows, so the rock layers become flat bands. The well's own log runs across the
+  columns.
+- Three more channels: the known positions, a match cost that marks where the two logs agree, and the well's dip.
+
+The task is now to **pick one row in every column**: draw the line that carries on from the known part. That is an
+image segmentation problem, and images come with tools that wiggly lines do not:
+
+- **Pretrained U-Nets.** A U-Net is the standard network for marking things in an image pixel by pixel. Its encoder
+  can start from weights learned on ImageNet, millions of everyday photos. Photos are not rocks, but a network that
+  already finds edges, bands and smooth lines is a good place to start. Larger encoders tended to help, so the final
+  models use big EfficientNets.
+- **As much practice data as we want.** The image is built from a reference log and a path through it. So we can make
+  up a path, read the reference log along it, add noise and geology (faults, dip breaks, repeated layers), and get a
+  training image with a known answer. Every model trains on 25,000 of these before it sees a real well. There are only
+  773 real ones.
+
+Few teams set the problem up this way.
 
 ## How it works
 
 1. **Folds** (`rogii_wellbore.cv`). 5 folds over the 773 training wells, stratified by each well's TVT range. Every run
    uses the same split.
-2. **Synthetic pretraining pool** (`synth`). Per fold, 25,000 synthetic wells built from that fold's training
-   typewells: a drifting, dipping path through the reference log, with faults, unconformities, variable bed
-   thickness, dip breaks and repeated sections shown more often than in real wells.
-3. **The well as an image** (`image`). 256 × 512 by default: columns are steps along the well, rows are 1 ft of TVT
-   around the last known position. Five channels: the reference log, the well's log, the known pre-PS positions, a
-   matching cost, and the well's dip. Predicting TVT becomes picking one row per column.
-4. **Two-stage U-Net** (`model`, `train`). An EfficientNet U-Net gives row probabilities per column; a second U-Net
-   reads the image plus those probabilities (softened, temperature 1.5) and refines them. Three of the four members
-   are also trained to refine their own output again ("unrolled") and are run for three rounds. Pretrain 5 epochs on
-   synthetic wells, fine-tune up to 35 on real wells with EMA weights, keep the best epoch at the deployment depth.
+2. **Synthetic wells** (`synth`). Per fold, 25,000 made-up wells built from that fold's training typewells: a
+   drifting, dipping path through the reference log, with faults, unconformities, variable bed thickness, dip breaks
+   and repeated sections shown more often than in real wells. The hard cases are the ambiguous ones, so they are
+   over-represented on purpose.
+3. **The well as an image** (`image`). 256 × 512 by default, five channels, as above.
+4. **Two-stage U-Net** (`model`, `train`). The first U-Net makes a guess: for every column, a chance for every row. The
+   second U-Net sees the image plus that guess and sharpens it, and its output can be fed back into it again:
+
+   ![The five-channel image goes into the stage 1 U-Net, which gives a first guess of row probabilities. Stage 2 reads the image plus that guess and gives a sharper one, which is fed back in for three rounds. The average row in each column, in feet, is the prediction. Below: training on 25,000 synthetic wells, then about 620 real wells, then four models averaged.](docs/img/two_stage_unet.svg)
+
+   The prediction in each column is the probability-weighted average row, turned back into feet. Each model
+   pretrains for 5 epochs on synthetic wells, then fine-tunes for up to 35 on real wells with EMA weights; the best
+   epoch at the deployment depth is kept. Three of the four members run three rounds; the L2 runs one.
 5. **Ensemble and submission** (`eval`, `infer`). Four members (EfficientNetV2-L at two image sizes,
    EfficientNetV2-XL, EfficientNet-L2), each 5 folds × 7 seeds, averaged with equal weights, no test-time
    augmentation.
 
-About half of the remaining error is one constant offset per well that the inputs do not determine. What was tried
-against it, and the mistakes caught along the way: [docs/WHAT_DIDNT_WORK.md](docs/WHAT_DIDNT_WORK.md).
+About half of the remaining error is one constant offset per well that the inputs do not pin down: the logs can match
+almost as well several feet higher or lower. What was tried against it, and the mistakes caught along the way:
+[docs/WHAT_DIDNT_WORK.md](docs/WHAT_DIDNT_WORK.md).
 
 ## Results
 
@@ -70,8 +105,8 @@ src/rogii_wellbore/   the package (pip install -e .)
 configs/              members/, eval/, submit/ (one YAML each)
 pipeline/NN_*/        per stage: the notebook of record (outputs stripped), a driver notebook, a README
 tests/                parity with the notebooks of record, and an end-to-end run on fake data
-scripts/              strip_notebooks.py; make_kaggle_src.py (code as a Kaggle dataset)
-docs/                 task, glossary, validation, what didn't work, scores, porting notes
+scripts/              strip_notebooks.py; make_kaggle_src.py (code as a Kaggle dataset); make_diagrams.py
+docs/                 task, glossary, validation, what didn't work, scores, porting notes; img/ diagrams
 ARTIFACTS.md          Kaggle datasets and Drive run folders
 ```
 

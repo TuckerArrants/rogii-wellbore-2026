@@ -1,0 +1,190 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 572" role="img" aria-labelledby="t d">
+<title id="t">The two-stage U-Net and how it is trained</title>
+<desc id="d">Top: the five-channel image goes into the stage 1 U-Net. Both U-Nets have EfficientNet encoders that start from ImageNet weights. Stage 1 gives, for every column, a probability for every row. These are softened (temperature 1.5) and added to the image as a sixth channel. Stage 2, a second U-Net, reads all six and gives sharper probabilities. Its output is fed back into itself two more times (three rounds; the L2 model runs one). The prediction in each column is the probability-weighted average row, turned back into depth in feet. Bottom: each model first learns on 25,000 synthetic wells per fold for 5 epochs, then on about 620 real wells for up to 35 epochs. Four models of different sizes, each trained 35 times (5 folds by 7 seeds), are averaged with equal weights.</desc>
+<style>
+  .bg{fill:#f8faf9} .ink{fill:#16222b} .mut{fill:#55646e}
+  .box{fill:#eef2f0;stroke:#c6d1ce;stroke-width:1.5}
+  .kbox{fill:#d3e7ee;stroke:#1b6a86;stroke-width:1.5}
+  .lbox{fill:#f4d9df;stroke:#a3304a;stroke-width:1.5}
+  .frame{fill:#ffffff;stroke:#c6d1ce;stroke-width:1.5}
+  .ar{stroke:#55646e;stroke-width:1.8;fill:none;marker-end:url(#a)}
+  .arl{stroke:#55646e;stroke-width:1.8;fill:none}
+  .dash{stroke:#a3304a;stroke-width:2.4;stroke-dasharray:7 5;fill:none}
+  .known{stroke:#16222b;stroke-width:3;fill:none}
+  .lrule{stroke:#55646e;stroke-width:1.3;fill:none}
+  .rule{stroke:#c6d1ce;stroke-width:1}
+  .head{fill:#55646e} .kt{fill:#1b6a86} .lt{fill:#a3304a}
+  .sw{fill:#1b6a86} .ly{fill:#b07d3c} .dot{fill:#16222b} .pin{fill:#a3304a}
+  .prob{stroke:#1b6a86;fill:none;stroke-linecap:round}
+  @media (prefers-color-scheme: dark){
+    .bg{fill:#172329} .ink{fill:#e7eef1} .mut{fill:#9db0b9}
+    .box{fill:#111a1f;stroke:#2c3c44} .kbox{fill:#15323d;stroke:#73c4de} .lbox{fill:#3d1c26;stroke:#f08aa0}
+    .frame{fill:#0d1418;stroke:#2c3c44}
+    .ar{stroke:#9db0b9} .arl{stroke:#9db0b9} .dash{stroke:#f08aa0} .known{stroke:#e7eef1} .lrule{stroke:#9db0b9}
+    .rule{stroke:#2c3c44} .head{fill:#9db0b9} .kt{fill:#73c4de} .lt{fill:#f08aa0}
+    .sw{fill:#73c4de} .ly{fill:#d9a560} .dot{fill:#e7eef1} .pin{fill:#f08aa0} .prob{stroke:#73c4de}
+  }
+  text{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px}
+  .h{font-weight:600;font-size:16px} .s{font-size:13px} .step{font-weight:700;font-size:15px}
+</style>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="head"/></marker></defs>
+<rect width="1000" height="572" rx="14" class="bg"/>
+<text x="24" y="36" class="step kt">THE MODEL</text>
+<text x="130" y="36" class="ink">Two U-Nets in a row. The second one checks and sharpens the first.</text>
+<rect x="24" y="94" width="120" height="1.7" class="sw" fill-opacity="0.19"/>
+<rect x="24" y="95.3" width="120" height="1.7" class="sw" fill-opacity="0.18"/>
+<rect x="24" y="96.6" width="120" height="1.7" class="sw" fill-opacity="0.14"/>
+<rect x="24" y="97.9" width="120" height="1.7" class="sw" fill-opacity="0.16"/>
+<rect x="24" y="99.2" width="120" height="1.7" class="sw" fill-opacity="0.20"/>
+<rect x="24" y="100.6" width="120" height="1.7" class="sw" fill-opacity="0.17"/>
+<rect x="24" y="101.9" width="120" height="1.7" class="sw" fill-opacity="0.14"/>
+<rect x="24" y="103.2" width="120" height="1.7" class="sw" fill-opacity="0.33"/>
+<rect x="24" y="104.5" width="120" height="1.7" class="sw" fill-opacity="0.35"/>
+<rect x="24" y="105.8" width="120" height="1.7" class="sw" fill-opacity="0.31"/>
+<rect x="24" y="107.1" width="120" height="1.7" class="sw" fill-opacity="0.29"/>
+<rect x="24" y="108.4" width="120" height="1.7" class="sw" fill-opacity="0.34"/>
+<rect x="24" y="109.8" width="120" height="1.7" class="sw" fill-opacity="0.24"/>
+<rect x="24" y="111.1" width="120" height="1.7" class="sw" fill-opacity="0.19"/>
+<rect x="24" y="112.4" width="120" height="1.7" class="sw" fill-opacity="0.20"/>
+<rect x="24" y="113.7" width="120" height="1.7" class="sw" fill-opacity="0.25"/>
+<rect x="24" y="115" width="120" height="1.7" class="sw" fill-opacity="0.23"/>
+<rect x="24" y="116.3" width="120" height="1.7" class="sw" fill-opacity="0.19"/>
+<rect x="24" y="117.6" width="120" height="1.7" class="sw" fill-opacity="0.22"/>
+<rect x="24" y="118.9" width="120" height="1.7" class="sw" fill-opacity="0.50"/>
+<rect x="24" y="120.2" width="120" height="1.7" class="sw" fill-opacity="0.46"/>
+<rect x="24" y="121.6" width="120" height="1.7" class="sw" fill-opacity="0.45"/>
+<rect x="24" y="122.9" width="120" height="1.7" class="sw" fill-opacity="0.49"/>
+<rect x="24" y="124.2" width="120" height="1.7" class="sw" fill-opacity="0.50"/>
+<rect x="24" y="125.5" width="120" height="1.7" class="sw" fill-opacity="0.27"/>
+<rect x="24" y="126.8" width="120" height="1.7" class="sw" fill-opacity="0.28"/>
+<rect x="24" y="128.1" width="120" height="1.7" class="sw" fill-opacity="0.32"/>
+<rect x="24" y="129.4" width="120" height="1.7" class="sw" fill-opacity="0.31"/>
+<rect x="24" y="130.8" width="120" height="1.7" class="sw" fill-opacity="0.27"/>
+<rect x="24" y="132.1" width="120" height="1.7" class="sw" fill-opacity="0.29"/>
+<rect x="24" y="133.4" width="120" height="1.7" class="sw" fill-opacity="0.33"/>
+<rect x="24" y="134.7" width="120" height="1.7" class="sw" fill-opacity="0.14"/>
+<rect x="24" y="136" width="120" height="1.7" class="sw" fill-opacity="0.11"/>
+<rect x="24" y="137.3" width="120" height="1.7" class="sw" fill-opacity="0.15"/>
+<rect x="24" y="138.6" width="120" height="1.7" class="sw" fill-opacity="0.17"/>
+<rect x="24" y="139.9" width="120" height="1.7" class="sw" fill-opacity="0.12"/>
+<rect x="24" y="141.2" width="120" height="1.7" class="sw" fill-opacity="0.38"/>
+<rect x="24" y="142.6" width="120" height="1.7" class="sw" fill-opacity="0.42"/>
+<rect x="24" y="143.9" width="120" height="1.7" class="sw" fill-opacity="0.41"/>
+<rect x="24" y="145.2" width="120" height="1.7" class="sw" fill-opacity="0.37"/>
+<rect x="24" y="146.5" width="120" height="1.7" class="sw" fill-opacity="0.39"/>
+<rect x="24" y="147.8" width="120" height="1.7" class="sw" fill-opacity="0.43"/>
+<rect x="24" y="149.1" width="120" height="1.7" class="sw" fill-opacity="0.27"/>
+<rect x="24" y="150.4" width="120" height="1.7" class="sw" fill-opacity="0.24"/>
+<rect x="24" y="151.8" width="120" height="1.7" class="sw" fill-opacity="0.28"/>
+<rect x="24" y="153.1" width="120" height="1.7" class="sw" fill-opacity="0.30"/>
+<rect x="24" y="154.4" width="120" height="1.7" class="sw" fill-opacity="0.25"/>
+<rect x="24" y="155.7" width="120" height="1.7" class="sw" fill-opacity="0.24"/>
+<rect x="24" y="157" width="120" height="1.7" class="sw" fill-opacity="0.52"/>
+<rect x="24" y="158.3" width="120" height="1.7" class="sw" fill-opacity="0.52"/>
+<rect x="24" y="159.6" width="120" height="1.7" class="sw" fill-opacity="0.47"/>
+<rect x="24" y="160.9" width="120" height="1.7" class="sw" fill-opacity="0.49"/>
+<rect x="24" y="162.2" width="120" height="1.7" class="sw" fill-opacity="0.53"/>
+<rect x="24" y="163.6" width="120" height="1.7" class="sw" fill-opacity="0.20"/>
+<rect x="24" y="164.9" width="120" height="1.7" class="sw" fill-opacity="0.16"/>
+<rect x="24" y="166.2" width="120" height="1.7" class="sw" fill-opacity="0.20"/>
+<rect x="24" y="167.5" width="120" height="1.7" class="sw" fill-opacity="0.22"/>
+<rect x="24" y="168.8" width="120" height="1.7" class="sw" fill-opacity="0.18"/>
+<rect x="24" y="170.1" width="120" height="1.7" class="sw" fill-opacity="0.32"/>
+<rect x="24" y="171.4" width="120" height="1.7" class="sw" fill-opacity="0.36"/>
+<rect x="24" y="172.8" width="120" height="1.7" class="sw" fill-opacity="0.37"/>
+<rect x="24" y="174.1" width="120" height="1.7" class="sw" fill-opacity="0.32"/>
+<rect x="24" y="175.4" width="120" height="1.7" class="sw" fill-opacity="0.33"/>
+<rect x="24" y="176.7" width="120" height="1.7" class="sw" fill-opacity="0.37"/>
+<circle cx="24.5" cy="133.4" r="1.6" class="dot"/>
+<circle cx="28.2" cy="134.5" r="1.6" class="dot"/>
+<circle cx="32" cy="135.6" r="1.6" class="dot"/>
+<circle cx="35.7" cy="136.7" r="1.6" class="dot"/>
+<circle cx="39.5" cy="137.9" r="1.6" class="dot"/>
+<circle cx="43.2" cy="138.9" r="1.6" class="dot"/>
+<circle cx="47" cy="139.9" r="1.6" class="dot"/>
+<circle cx="50.7" cy="140.7" r="1.6" class="dot"/>
+<circle cx="54.5" cy="141.3" r="1.6" class="dot"/>
+<circle cx="58.2" cy="141.7" r="1.6" class="dot"/>
+<circle cx="62" cy="141.9" r="1.6" class="dot"/>
+<circle cx="65.7" cy="141.9" r="1.6" class="dot"/>
+<rect x="24" y="94" width="120" height="84" fill="none" class="lrule"/>
+<text x="84" y="200" text-anchor="middle" class="h ink">the image</text>
+<text x="84" y="218" text-anchor="middle" class="s mut">5 channels</text>
+<path d="M148 136 H176" class="ar"/>
+<rect x="178" y="80" width="170" height="128" rx="10" class="kbox"/>
+<rect x="194" y="109" width="13" height="34" rx="2" class="box"/>
+<rect x="319" y="109" width="13" height="34" rx="2" class="box"/>
+<path d="M209 126 H317" class="lrule" stroke-dasharray="2 3"/>
+<rect x="209" y="131.3" width="13" height="28" rx="2" class="box"/>
+<rect x="304" y="131.3" width="13" height="28" rx="2" class="box"/>
+<path d="M224 145.3 H302" class="lrule" stroke-dasharray="2 3"/>
+<rect x="224" y="153.7" width="13" height="22" rx="2" class="box"/>
+<rect x="289" y="153.7" width="13" height="22" rx="2" class="box"/>
+<path d="M239 164.7 H287" class="lrule" stroke-dasharray="2 3"/>
+<rect x="239" y="176" width="13" height="16" rx="2" class="box"/>
+<rect x="274" y="176" width="13" height="16" rx="2" class="box"/>
+<text x="263" y="106" text-anchor="middle" class="h ink">Stage 1 U-Net</text>
+<text x="263" y="230" text-anchor="middle" class="s mut">EfficientNet encoder from</text>
+<text x="263" y="246" text-anchor="middle" class="s mut">ImageNet (both stages)</text>
+<path d="M350 136 H380" class="ar"/>
+<rect x="382" y="94" width="120" height="84" rx="6" class="frame"/>
+<path d="M382.5 133.4 L384.3 134.8 L386.2 136.1 L388.1 137.4 L390 138.6 L391.8 139.7 L393.7 140.6 L395.6 141.3 L397.5 141.7 L399.3 142 L401.2 142.1 L403.1 142 L405 141.7 L406.8 141.3 L408.7 140.8 L410.6 140.3 L412.5 139.7 L414.3 139.2 L416.2 138.7 L418.1 138.4 L420 138.1 L421.8 138 L423.7 138.1 L425.6 138.3 L427.5 138.6 L429.3 139.1 L431.2 139.7 L433.1 140.3 L435 141 L436.8 141.7 L438.7 142.4 L440.6 143 L442.5 143.6 L444.3 144 L446.2 144.3 L448.1 144.4 L450 144.4 L451.8 144.2 L453.7 144 L455.6 143.6 L457.5 143.1 L459.3 142.6 L461.2 142.1 L463.1 141.6 L465 141.2 L466.8 140.9 L468.7 140.8 L470.6 140.8 L472.5 141 L474.3 141.4 L476.2 142 L478.1 142.8 L480 143.8 L481.8 144.9 L483.7 146.1 L485.6 147.3 L487.5 148.6 L489.3 149.8 L491.2 150.8 L493.1 151.8 L495 152.5 L496.8 153 L498.7 153.2 L500.6 153.1" class="prob" stroke-width="30" stroke-opacity="0.12"/>
+<path d="M382.5 133.4 L384.3 134.8 L386.2 136.1 L388.1 137.4 L390 138.6 L391.8 139.7 L393.7 140.6 L395.6 141.3 L397.5 141.7 L399.3 142 L401.2 142.1 L403.1 142 L405 141.7 L406.8 141.3 L408.7 140.8 L410.6 140.3 L412.5 139.7 L414.3 139.2 L416.2 138.7 L418.1 138.4 L420 138.1 L421.8 138 L423.7 138.1 L425.6 138.3 L427.5 138.6 L429.3 139.1 L431.2 139.7 L433.1 140.3 L435 141 L436.8 141.7 L438.7 142.4 L440.6 143 L442.5 143.6 L444.3 144 L446.2 144.3 L448.1 144.4 L450 144.4 L451.8 144.2 L453.7 144 L455.6 143.6 L457.5 143.1 L459.3 142.6 L461.2 142.1 L463.1 141.6 L465 141.2 L466.8 140.9 L468.7 140.8 L470.6 140.8 L472.5 141 L474.3 141.4 L476.2 142 L478.1 142.8 L480 143.8 L481.8 144.9 L483.7 146.1 L485.6 147.3 L487.5 148.6 L489.3 149.8 L491.2 150.8 L493.1 151.8 L495 152.5 L496.8 153 L498.7 153.2 L500.6 153.1" class="prob" stroke-width="16" stroke-opacity="0.25"/>
+<path d="M382.5 133.4 L384.3 134.8 L386.2 136.1 L388.1 137.4 L390 138.6 L391.8 139.7 L393.7 140.6 L395.6 141.3 L397.5 141.7 L399.3 142 L401.2 142.1 L403.1 142 L405 141.7 L406.8 141.3 L408.7 140.8 L410.6 140.3 L412.5 139.7 L414.3 139.2 L416.2 138.7 L418.1 138.4 L420 138.1 L421.8 138 L423.7 138.1 L425.6 138.3 L427.5 138.6 L429.3 139.1 L431.2 139.7 L433.1 140.3 L435 141 L436.8 141.7 L438.7 142.4 L440.6 143 L442.5 143.6 L444.3 144 L446.2 144.3 L448.1 144.4 L450 144.4 L451.8 144.2 L453.7 144 L455.6 143.6 L457.5 143.1 L459.3 142.6 L461.2 142.1 L463.1 141.6 L465 141.2 L466.8 140.9 L468.7 140.8 L470.6 140.8 L472.5 141 L474.3 141.4 L476.2 142 L478.1 142.8 L480 143.8 L481.8 144.9 L483.7 146.1 L485.6 147.3 L487.5 148.6 L489.3 149.8 L491.2 150.8 L493.1 151.8 L495 152.5 L496.8 153 L498.7 153.2 L500.6 153.1" class="prob" stroke-width="6" stroke-opacity="0.55"/>
+<text x="442" y="200" text-anchor="middle" class="h ink">first guess</text>
+<text x="442" y="218" text-anchor="middle" class="s mut">chance of each row</text>
+<text x="442" y="234" text-anchor="middle" class="s mut">softened (T = 1.5)</text>
+<path d="M504 136 H554" class="ar"/>
+<text x="529" y="130" text-anchor="middle" class="h ink">+</text>
+<rect x="556" y="80" width="170" height="128" rx="10" class="kbox"/>
+<rect x="572" y="109" width="13" height="34" rx="2" class="box"/>
+<rect x="697" y="109" width="13" height="34" rx="2" class="box"/>
+<path d="M587 126 H695" class="lrule" stroke-dasharray="2 3"/>
+<rect x="587" y="131.3" width="13" height="28" rx="2" class="box"/>
+<rect x="682" y="131.3" width="13" height="28" rx="2" class="box"/>
+<path d="M602 145.3 H680" class="lrule" stroke-dasharray="2 3"/>
+<rect x="602" y="153.7" width="13" height="22" rx="2" class="box"/>
+<rect x="667" y="153.7" width="13" height="22" rx="2" class="box"/>
+<path d="M617 164.7 H665" class="lrule" stroke-dasharray="2 3"/>
+<rect x="617" y="176" width="13" height="16" rx="2" class="box"/>
+<rect x="652" y="176" width="13" height="16" rx="2" class="box"/>
+<text x="641" y="106" text-anchor="middle" class="h ink">Stage 2 U-Net</text>
+<path d="M84 228 V272 H641.0 V210" class="ar" stroke-dasharray="4 4"/>
+<text x="653" y="254" class="s mut">stage 2 also reads the 5 channels</text>
+<path d="M728 136 H758" class="ar"/>
+<rect x="760" y="94" width="120" height="84" rx="6" class="frame"/>
+<path d="M760.5 133.4 L762.3 133.9 L764.2 134.5 L766.1 135 L768 135.6 L769.8 136.2 L771.7 136.7 L773.6 137.3 L775.5 137.9 L777.3 138.4 L779.2 138.9 L781.1 139.4 L783 139.9 L784.8 140.3 L786.7 140.7 L788.6 141 L790.5 141.3 L792.3 141.5 L794.2 141.7 L796.1 141.8 L798 141.9 L799.8 142 L801.7 141.9 L803.6 141.9 L805.5 141.8 L807.3 141.7 L809.2 141.6 L811.1 141.4 L813 141.3 L814.8 141.1 L816.7 140.9 L818.6 140.8 L820.5 140.7 L822.3 140.6 L824.2 140.5 L826.1 140.5 L828 140.5 L829.8 140.6 L831.7 140.7 L833.6 140.9 L835.5 141.1 L837.3 141.4 L839.2 141.7 L841.1 142.1 L843 142.6 L844.8 143.1 L846.7 143.6 L848.6 144.2 L850.5 144.8 L852.3 145.4 L854.2 146 L856.1 146.6 L858 147.1 L859.8 147.7 L861.7 148.2 L863.6 148.6 L865.5 149 L867.3 149.4 L869.2 149.6 L871.1 149.7 L873 149.8 L874.8 149.7 L876.7 149.5 L878.6 149.2" class="prob" stroke-width="16" stroke-opacity="0.15"/>
+<path d="M760.5 133.4 L762.3 133.9 L764.2 134.5 L766.1 135 L768 135.6 L769.8 136.2 L771.7 136.7 L773.6 137.3 L775.5 137.9 L777.3 138.4 L779.2 138.9 L781.1 139.4 L783 139.9 L784.8 140.3 L786.7 140.7 L788.6 141 L790.5 141.3 L792.3 141.5 L794.2 141.7 L796.1 141.8 L798 141.9 L799.8 142 L801.7 141.9 L803.6 141.9 L805.5 141.8 L807.3 141.7 L809.2 141.6 L811.1 141.4 L813 141.3 L814.8 141.1 L816.7 140.9 L818.6 140.8 L820.5 140.7 L822.3 140.6 L824.2 140.5 L826.1 140.5 L828 140.5 L829.8 140.6 L831.7 140.7 L833.6 140.9 L835.5 141.1 L837.3 141.4 L839.2 141.7 L841.1 142.1 L843 142.6 L844.8 143.1 L846.7 143.6 L848.6 144.2 L850.5 144.8 L852.3 145.4 L854.2 146 L856.1 146.6 L858 147.1 L859.8 147.7 L861.7 148.2 L863.6 148.6 L865.5 149 L867.3 149.4 L869.2 149.6 L871.1 149.7 L873 149.8 L874.8 149.7 L876.7 149.5 L878.6 149.2" class="prob" stroke-width="8" stroke-opacity="0.35"/>
+<path d="M760.5 133.4 L762.3 133.9 L764.2 134.5 L766.1 135 L768 135.6 L769.8 136.2 L771.7 136.7 L773.6 137.3 L775.5 137.9 L777.3 138.4 L779.2 138.9 L781.1 139.4 L783 139.9 L784.8 140.3 L786.7 140.7 L788.6 141 L790.5 141.3 L792.3 141.5 L794.2 141.7 L796.1 141.8 L798 141.9 L799.8 142 L801.7 141.9 L803.6 141.9 L805.5 141.8 L807.3 141.7 L809.2 141.6 L811.1 141.4 L813 141.3 L814.8 141.1 L816.7 140.9 L818.6 140.8 L820.5 140.7 L822.3 140.6 L824.2 140.5 L826.1 140.5 L828 140.5 L829.8 140.6 L831.7 140.7 L833.6 140.9 L835.5 141.1 L837.3 141.4 L839.2 141.7 L841.1 142.1 L843 142.6 L844.8 143.1 L846.7 143.6 L848.6 144.2 L850.5 144.8 L852.3 145.4 L854.2 146 L856.1 146.6 L858 147.1 L859.8 147.7 L861.7 148.2 L863.6 148.6 L865.5 149 L867.3 149.4 L869.2 149.6 L871.1 149.7 L873 149.8 L874.8 149.7 L876.7 149.5 L878.6 149.2" class="prob" stroke-width="3" stroke-opacity="0.9"/>
+<text x="820" y="200" text-anchor="middle" class="h ink">sharper guess</text>
+<path d="M820.0 92 V64 H641.0 V78" class="ar"/>
+<text x="730.5" y="58" text-anchor="middle" class="s kt">feed back in: 3 rounds in total</text>
+<path d="M882 136 H912" class="ar"/>
+<rect x="914" y="106" width="62" height="60" rx="30" class="lbox"/>
+<text x="945" y="133" text-anchor="middle" class="h lt">TVT</text>
+<text x="945" y="151" text-anchor="middle" class="s lt">in ft</text>
+<text x="945" y="200" text-anchor="middle" class="s mut">average</text>
+<text x="945" y="216" text-anchor="middle" class="s mut">row, in feet</text>
+<line x1="24" y1="306" x2="976" y2="306" class="rule"/>
+<text x="24" y="340" class="step kt">TRAINING</text>
+<text x="124" y="340" class="ink">Learn on made-up wells first, where the answer is always known.</text>
+<rect x="24" y="364" width="286" height="120" rx="10" class="box"/>
+<text x="167" y="392" text-anchor="middle" class="h ink">25,000 synthetic wells</text>
+<text x="167" y="416" text-anchor="middle" class="s mut">per fold, from the reference logs:</text>
+<text x="167" y="436" text-anchor="middle" class="s mut">faults, dip breaks, repeats</text>
+<text x="167" y="456" text-anchor="middle" class="s mut">5 epochs</text>
+<path d="M312 424 H355" class="ar"/>
+<rect x="357" y="364" width="286" height="120" rx="10" class="box"/>
+<text x="500" y="392" text-anchor="middle" class="h ink">about 620 real wells</text>
+<text x="500" y="416" text-anchor="middle" class="s mut">per fold; flips, stretches,</text>
+<text x="500" y="436" text-anchor="middle" class="s mut">hidden hints; EMA weights</text>
+<text x="500" y="456" text-anchor="middle" class="s mut">up to 35 epochs</text>
+<path d="M645 424 H688" class="ar"/>
+<rect x="690" y="364" width="286" height="120" rx="10" class="kbox"/>
+<text x="833" y="392" text-anchor="middle" class="h ink">4 models, averaged</text>
+<text x="833" y="416" text-anchor="middle" class="s mut">EfficientNetV2-L (2 sizes), V2-XL, L2</text>
+<text x="833" y="436" text-anchor="middle" class="s mut">each 5 folds × 7 seeds</text>
+<text x="833" y="456" text-anchor="middle" class="s mut">equal weights, CV 5.038</text>
+<text x="24" y="528" class="s mut">Only the rows inside the image are trained on. Both stages get a loss; stage 1 does not get gradients through the</text>
+<text x="24" y="546" class="s mut">hand-off. Stage 2 is trained to improve its own output (2 to 4 rounds on half the steps), so 3 rounds help at prediction time.</text>
+</svg>

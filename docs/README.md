@@ -14,3 +14,7 @@ Records:
   and the two places where CV did not describe the test set.
 - [PORTING.md](PORTING.md): how the notebooks became the `rogii_wellbore` package, what the tests check against the
   notebooks, the deliberate differences, and what is still owed.
+
+Diagrams (`img/`, drawn by `scripts/make_diagrams.py`): [the well as an image](img/well_as_image.svg) and
+[the two-stage U-Net and its training](img/two_stage_unet.svg). Both are explained in the
+[top-level README](../README.md#the-idea-draw-the-well-as-a-picture).

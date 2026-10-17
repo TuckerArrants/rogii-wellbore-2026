@@ -16,6 +16,8 @@ Words the READMEs and notebooks use without explaining. The task itself: [TASK.m
 
 ## The image
 
+Picture: [img/well_as_image.svg](img/well_as_image.svg).
+
 | term | meaning |
 |---|---|
 | **image, frame** | one well drawn as H × W = 256 × 512: W columns along MD, H rows of 1 ft in TVT, centred on the last known TVT |
@@ -25,6 +27,8 @@ Words the READMEs and notebooks use without explaining. The task itself: [TASK.m
 | **supervision window** | only ±128 ft around the PS depth is inside the image; truth outside it is not trained on |
 
 ## Models
+
+Picture: [img/two_stage_unet.svg](img/two_stage_unet.svg).
 
 | term | meaning |
 |---|---|
