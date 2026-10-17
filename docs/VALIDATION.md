@@ -43,8 +43,8 @@ How a change was judged, and how the public leaderboard was read.
 1. **The MD grid.** Every training well sits on an exact 1.0 ft MD grid; about 16% of test wells do not. No CV can
    show how a model handles that.
 2. **The neighbour prior.** A guess built from nearby training wells, given to the model as an extra channel, took
-   the best single model from 5.18 to 5.03 in CV. On the public board it scored worse with the prior (6.2) than
+   the best single model from 5.18 to 5.03 in CV. On the public board it scored worse with the prior (6.09) than
    with it blanked (5.7), and the prior alone scored 24.7 against 13.3 in CV. We concluded that random folds
    overstate anything built from neighbours, built region-held-out folds that agreed (they had been weighted to
-   reproduce the public score), and dropped the prior. The private board showed the opposite: that model would have
-   placed 7th. The full account: [the top-level README](../README.md#the-best-model-we-did-not-submit).
+   reproduce the public score), and dropped the prior. The private board showed the opposite: the prior alone
+   scored 13.2, matching CV, and the model scored 6.11, which would have placed 7th. The full account: [the top-level README](../README.md#the-best-model-we-did-not-submit).

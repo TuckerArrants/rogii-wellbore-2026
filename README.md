@@ -76,7 +76,7 @@ almost as well several feet higher or lower. What was tried against it:
 | member: EfficientNetV2-L | 5.157 | |
 | member: EfficientNetV2-L, 224 × 448 | 5.252 | |
 | member: EfficientNet-L2 | 5.260 | |
-| *not submitted:* EfficientNetV2-XL with the neighbour prior, one model | 5.027 | would have placed **7th** |
+| *not submitted:* EfficientNetV2-XL with the neighbour prior, one model | 5.027 | 6.11 (would have placed **7th**) |
 
 How the CV line came down from about 12 ft, every recorded leaderboard score, and why the private score sits above CV:
 [docs/LEADERBOARD.md](docs/LEADERBOARD.md).
@@ -93,7 +93,7 @@ should go. A learned gate at the output decided how much to trust it.
 It took a single EfficientNetV2-XL (5 folds × 5 seeds) from 5.180 to **5.027**, the best CV of the project. Then we
 dropped it. Three things pointed the same way:
 
-- **The public board.** On its roughly 50 wells, the model scored 6.2 with the prior and 5.7 with the prior channel
+- **The public board.** On its roughly 50 wells, the model scored 6.09 with the prior and 5.7 with the prior channel
   blanked. The prior alone scored 24.7, against 13.3 in CV.
 - **A plausible story.** Random folds put each validation well's neighbours in the training set. If the test wells
   sit further from the training wells, a neighbour feature looks better in CV than it is. That seemed to explain the
@@ -104,16 +104,24 @@ dropped it. Three things pointed the same way:
 It looked too good to be true, so we checked for leakage and found none: the prior's inputs were the same numbers at
 training and at test. We dropped it anyway, on 18 July, and built the final ensemble without it.
 
-The private board, the other three quarters of the test wells, went the other way. The 5.027 model would have placed
-7th, and every submission that used the prior, as the 7th channel or as a simple blend with the model's output,
-scored much better than the final ensemble. Its Kaggle notebook is kept as
+The private board, the other three quarters of the test wells, went the other way:
+
+| | CV | public LB | private LB |
+|---|---|---|---|
+| the prior alone | 13.3 | 24.7 | **13.2** |
+| EfficientNetV2-XL with the prior (5.027 model) | 5.027 | 6.09 | **6.11** (would have placed 7th) |
+| final ensemble, no prior | 5.038 | | 6.600 (26th) |
+
+The prior alone scored 13.2 on the private board, the same as its 13.3 in CV. The CV was right; the public board's 50
+wells were the odd ones out. Every submission that used the prior, as the 7th channel or as a simple blend with the
+model's output, scored much better than the final ensemble. The 5.027 model's Kaggle notebook is kept as
 [`pipeline/03_submit/stacked-unet-inference.ipynb`](pipeline/03_submit/stacked-unet-inference.ipynb); it is not
 ported to the package.
 
 What we take from it:
 
 - **About 50 wells should not overrule CV on 773.** Our own simulation put one public score at ±0.85 ft, and we
-  acted on a 0.5 ft gap.
+  acted on a 0.4 ft gap. The 24.7 looked too large to be noise, but the private board put the prior back at 13.2.
 - **"Too good to be true" is a reason to look for a leak, not a verdict.** Once the leak check came back clean, the CV
   result should have stood.
 - **A check tuned to agree with a number cannot confirm it.**

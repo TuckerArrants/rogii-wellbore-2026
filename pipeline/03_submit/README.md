@@ -45,8 +45,8 @@ scoring: all 140 checkpoints resolved, every row filled by the models (none by t
 ## The submission we did not pick
 
 `stacked-unet-inference.ipynb` (outputs stripped) is the Kaggle notebook of the best single model: EfficientNetV2-XL,
-5 folds × 5 seeds, CV **5.027**, with the neighbour prior. It would have placed 7th on the private board; it was not
-selected. Why, and what we learned: [the top-level README](../../README.md#the-best-model-we-did-not-submit).
+5 folds × 5 seeds, CV **5.027**, with the neighbour prior. It scored 6.091 public and **6.11 private**, which would have
+placed 7th; it was not selected. Why, and what we learned: [the top-level README](../../README.md#the-best-model-we-did-not-submit).
 
 How it differs from the final submission:
 

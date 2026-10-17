@@ -27,10 +27,10 @@ score is uncertain by about ±0.85 ft, and two related submissions differ by cha
 | 11 Jul | augmentation strengths re-tuned on the new line | 5.474 | |
 | 11 Jul | rebuilt pool + dip breaks and repeated sections (event pack A) | 5.307 | |
 | 12 Jul | unrolled training + supervision of every round, k = 3 | 5.180 | |
-| 16–17 Jul | + neighbour prior as an extra channel, with a learned gate | 5.027 | 6.2 (prior on), 5.7 (prior blanked) |
+| 16–17 Jul | + neighbour prior as an extra channel, with a learned gate | 5.027 | 6.091 (prior on), 5.7 (prior blanked) |
 
 The neighbour prior was then dropped on the public board's reading, and the final ensemble does not use it. That was a
-mistake: on the private board this model would have placed 7th
+mistake: on the private board this model scored 6.11 and would have placed 7th
 ([the top-level README](../README.md#the-best-model-we-did-not-submit)).
 
 ## The final ensemble
@@ -55,14 +55,15 @@ Submitted as an equal-weight average (0.25 each):
 
 | submission | CV | public LB | private LB |
 |---|---|---|---|
-| `stacked-unet-inference`: EfficientNetV2-XL with the neighbour prior, 5 folds × 5 seeds | **5.027** | 6.2 | would have placed **7th** |
+| `stacked-unet-inference`: EfficientNetV2-XL with the neighbour prior, 5 folds × 5 seeds | **5.027** | 6.091 | **6.11** (would have placed 7th) |
+| the neighbour prior alone (no model) | 13.3 | 24.7 | 13.2 |
 
-Every submission that used the neighbour prior, as an input channel or as a blend with the model's output, scored
+The prior alone scored the same on the private board as in CV; the public board was the outlier. Every submission that used the neighbour prior, as an input channel or as a blend with the model's output, scored
 much better on the private board than the final ensemble.
 
 ## Why the private score is above CV
 
 The ensemble scores 5.038 on CV (members 5.14–5.26); the private leaderboard gave 6.600. Two things are known. About
 16% of test wells are off the MD grid that every training well uses ([VALIDATION.md](VALIDATION.md)). And the
-neighbour-prior model, with almost the same CV (5.027), would have placed 7th: on the private wells, the prior was
-worth far more than the final ensemble's extra members. How much of the gap each explains was not measured.
+neighbour-prior model, with almost the same CV (5.027), scored 6.11: on the private wells, the prior was worth about
+0.5 ft more than the final ensemble's extra members. How much of the gap each explains was not measured.
