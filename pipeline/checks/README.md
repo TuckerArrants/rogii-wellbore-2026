@@ -35,6 +35,29 @@ python -m rogii_wellbore.verify --config configs/members/v2l.yaml --data-root <d
 
 On CPU it takes about 3 s per well for EfficientNetV2-L (153 wells in a fold), so it does not need a GPU.
 
-## Results
+## Results (18 October 2026, Colab GPU)
 
-Not run yet. When they are, record them here: date, runtime, and each check's printout.
+**1. OOF scores: PASS.** Every number of record, to the printed precision:
+
+| | full CV | per fold |
+|---|---|---|
+| L2 | 5.2601 | 5.657 5.115 5.428 5.263 4.806 |
+| V2-XL | 5.1362 | 5.291 4.986 5.109 5.413 4.874 |
+| V2-L | 5.1569 | 5.324 5.008 5.197 5.301 4.948 |
+| V2-L small | 5.2525 | 5.631 5.068 5.237 5.548 4.745 |
+| **blend** | **5.0383** | 5.319 4.842 5.079 5.250 4.683 |
+
+Blend offset/drift 3.54 / 3.58 ft; member error correlations 0.89–0.96.
+
+**2. Checkpoint replay: PASS.** V2-L, fold 0, seed 34, k = 3, 153 wells: RMSE 5.7179 in the notebook's OOF file,
+5.7180 replayed; largest single-row difference 0.032 ft (p99 0.008 ft). The first run printed FAIL on the fold
+split: the run folder's `ft39l_fold_splits.json` holds fold 4 only (it matched), and the check counted the four
+missing folds as differences. The check now compares against the OOF files, which name every fold's wells, and
+against the recorded file only for the folds it holds.
+
+**3. Tiny training run: PASS** (it only had to finish). Fold 0: 620 train / 153 validation wells (constant
+15–16 ft), 773 wells rendered in 15 s, a 200-well pool, ImageNet weights downloaded, 1 pretraining and 2
+fine-tuning epochs with unrolling and EMA, then the OOF file, summary and manifest. Best 15.238 at epoch 1
+(constant 16.124), as expected for a run this short.
+
+**4. Full submission on Kaggle:** not run yet.

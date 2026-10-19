@@ -8,8 +8,9 @@ Retraining cannot reproduce a run (seed and GPU noise, and hours of synthetic pr
 inference can. For each (fold, seed) this loads ``ckpt_f{fold}_s{seed}.pt``, renders the fold's
 validation wells with the package, predicts them at the member's ``checkpoint_k``, and compares
 with ``oof_f{fold}_s{seed}.npz``, which the training notebook wrote from the same checkpoint.
-It also checks the package's fold split against the run folder's ``fold_splits.json`` (or
-``ft39l_fold_splits.json``) when one is there.
+It also checks the package's fold split against the wells named in the run folder's OOF files (every
+fold that has one) and against ``fold_splits.json`` / ``ft39l_fold_splits.json`` for the folds that
+file holds (the notebook's copy can hold only the folds of its last session).
 
 What it exercises: reading the real competition files, the fold split, image rendering at the
 member's geometry, the real encoder, loading a notebook checkpoint, refeed, decode and scoring.
@@ -53,14 +54,32 @@ def recorded_folds(run_dir: str):
     return None, None
 
 
-def check_folds(ours: dict, theirs: dict) -> list[str]:
-    """Differences between two fold splits, as readable lines (empty = identical)."""
+def check_folds(ours: dict, theirs: dict, source: str) -> list[str]:
+    """Differences between our split and a recorded one, on the folds the record holds (a fold
+    with no validation wells in the record is skipped, not counted as a difference)."""
     bad = []
-    for f in sorted(set(ours) | set(theirs)):
-        a, b = ours.get(f, {}).get('val', []), theirs.get(f, {}).get('val', [])
+    for f in sorted(theirs):
+        b = theirs[f].get('val', [])
+        if not b:
+            continue
+        a = ours.get(f, {}).get('val', [])
         if sorted(a) != sorted(b):
-            bad.append(f'fold {f}: {len(set(a) - set(b))} wells only in ours, {len(set(b) - set(a))} only in the record')
+            bad.append(f'fold {f} vs {source}: {len(set(a) - set(b))} wells only in ours, '
+                       f'{len(set(b) - set(a))} only in the record')
     return bad
+
+
+def oof_folds(run_dir: str) -> dict:
+    """{fold: {'val': well ids}} from the run folder's OOF files: each file names its fold's
+    validation wells, so together they record the whole split. All seeds of a fold must agree."""
+    out = {}
+    for p in sorted(glob.glob(os.path.join(run_dir, 'oof_f*_s*.npz'))):
+        f = int(os.path.basename(p).split('_')[1][1:])
+        w = sorted(str(x) for x in np.load(p, allow_pickle=True)['well_ids'])
+        if f in out and out[f]['val'] != w:
+            raise ValueError(f'{p}: different wells from the other seeds of fold {f}')
+        out[f] = {'val': w}
+    return out
 
 
 def compare(replay: dict, record: dict) -> dict:
@@ -88,16 +107,18 @@ def replay(cfg: C.RunConfig, data_root: str, run_dir: str, ckpt_dir: str | None 
     truths = TruthCache(store)
 
     folds = make_folds(store, seed=cfg.cv.seed, n_folds=cfg.cv.n_folds)
+    from_oof = oof_folds(run_dir)
+    diff = check_folds(folds, from_oof, 'the OOF files')
     rec_folds, rec_name = recorded_folds(run_dir)
-    fold_diff = check_folds(folds, rec_folds) if rec_folds else None
-    if rec_folds is None:
-        log('fold split: no fold_splits.json in the run folder, not compared')
-    elif fold_diff:
-        log('fold split: DIFFERENT from ' + rec_name + '\n  ' + '\n  '.join(fold_diff))
+    held = [f for f in sorted(rec_folds or {}) if rec_folds[f].get('val')]
+    if rec_folds:
+        diff += check_folds(folds, rec_folds, rec_name)
+    if diff:
+        log('fold split: DIFFERENT\n  ' + '\n  '.join(diff))
     else:
-        log(f'fold split: identical to {rec_name} ({", ".join(str(len(folds[f]["val"])) for f in sorted(folds))})')
-
-    out = {'device': str(device), 'fold_split_ok': None if rec_folds is None else not fold_diff, 'seeds': {}}
+        log(f'fold split: identical to the OOF files\' wells for folds {sorted(from_oof)}'
+            + (f' and to {rec_name} (which holds folds {held})' if rec_folds else ''))
+    out = {'device': str(device), 'fold_split_ok': not diff, 'oof_folds': sorted(from_oof), 'seeds': {}}
     for seed in seeds:
         record = load_seed_oof(os.path.join(run_dir, f'oof_f{fold}_s{seed}.npz'))
         meta = record['_meta']
@@ -106,9 +127,6 @@ def replay(cfg: C.RunConfig, data_root: str, run_dir: str, ckpt_dir: str | None 
                 f'the config says {cfg.train.checkpoint_k}; using the file\'s')
         k = int(meta.get('checkpoint_k', cfg.train.checkpoint_k))
         wids = [w for w in record if w != '_meta']
-        if rec_folds is None and sorted(wids) != sorted(folds[fold]['val']):
-            log(f'  fold split: the OOF file\'s wells differ from our fold {fold}')
-            out['fold_split_ok'] = False
         wids = wids[:max_wells] if max_wells else wids
         recs = {w: build_image(**arrays_from_frames(store.read_hw(w), store.read_tw(w)), geom=cfg.geometry)
                 for w in wids}
@@ -120,7 +138,7 @@ def replay(cfg: C.RunConfig, data_root: str, run_dir: str, ckpt_dir: str | None 
             f'row diff max {r["max_d_pred"]:.4f} ft, p99 {r["p99_d_pred"]:.4f} ft  -> '
             f'{"PASS" if r["ok"] else "FAIL"}')
         out['seeds'][seed] = r
-    out['ok'] = all(r['ok'] for r in out['seeds'].values()) and out['fold_split_ok'] is not False
+    out['ok'] = all(r['ok'] for r in out['seeds'].values()) and out['fold_split_ok']
     return out
 
 

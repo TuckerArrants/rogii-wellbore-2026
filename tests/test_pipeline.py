@@ -149,3 +149,24 @@ def test_smoke_config_is_v2l_made_small():
     assert (s.synth.n_wells, list(s.train.folds), list(s.train.seeds), s.train.pretrain_epochs,
             s.train.finetune_epochs) == (200, [0], [34], 1, 2)
     assert s.experiment_name() != v.experiment_name()     # never writes into a member's run folder
+
+
+def test_verify_fold_check_skips_folds_missing_from_the_record(tiny_run, fake_data, tmp_path):
+    """The notebook's ft39l_fold_splits.json can hold only its last session's folds; the check
+    compares the folds it holds, and the OOF files still pin the replayed fold."""
+    import shutil
+    from rogii_wellbore.cv import load_folds, save_folds
+    cfg, out, _ = tiny_run
+    for f in os.listdir(out):
+        if f != 'fold_splits.json':
+            shutil.copy(out / f, tmp_path / f)
+    folds = load_folds(str(out / 'fold_splits.json'))
+    partial = {f: (v if f == 4 else {'val': [], 'train': []}) for f, v in folds.items()}
+    save_folds(partial, str(tmp_path / 'ft39l_fold_splits.json'))
+    res = replay(cfg, str(fake_data), str(tmp_path), fold=0, seeds=[34], device=torch.device('cpu'),
+                 log=lambda *a: None)
+    assert res['ok'] and res['fold_split_ok'] and res['oof_folds'] == [0]
+    wrong = {f: {'val': folds[(f + 1) % 5]['val'], 'train': []} for f in folds}
+    save_folds(wrong, str(tmp_path / 'ft39l_fold_splits.json'))
+    assert not replay(cfg, str(fake_data), str(tmp_path), fold=0, seeds=[34], device=torch.device('cpu'),
+                      log=lambda *a: None)['ok']
