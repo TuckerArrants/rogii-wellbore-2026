@@ -1,0 +1,25 @@
+# A check, not a submission: the final submission without its L2 member, for when the rogii-l2 model is not
+# attached. The three V2 members at 1/3 each. Since the saved blend b4 = (L2 + XL + L + L_small) / 4, this blend
+# is (4 b4 - L2) / 3, so it differs from the saved submission by (b4 - L2) / 3 on every row. The saved run printed
+# L2's largest distance from the blend as 1.456 ft (mean 0.352), so every row must land within 0.49 ft of the
+# reference (mean about 0.12 ft). reference_rows.json carries that bound as v2_only_tol.
+root: /kaggle/input
+members:
+  xl_hT15_k3:
+    dir: datasets/tuckerarrants/rogii-v2s/5fold_effnetv2_xl_stack2_ema_25000pt_mdwarp36_bedwarp36_unroll50_deepsup_handoffT15_expa_pt
+    weight: 0.3333333333333333
+    eval_k: 3
+    handoff_t: 1.5
+    refeed_t: 1.0
+  l_hT15_k3:
+    dir: datasets/tuckerarrants/rogii-v2s/5fold_effnetv2_l_stack2_ema_25000pt_mdwarp36_bedwarp36_unroll50_deepsup_handoffT15_expa_pt
+    weight: 0.3333333333333333
+    eval_k: 3
+    handoff_t: 1.5
+    refeed_t: 1.0
+  l_hT15_k3_small:
+    dir: datasets/tuckerarrants/rogii-v2s/5fold_effnetv2_l_stack2_ema_25000pt_mdwarp36_bedwarp36_unroll50_deepsup_handoffT15_expa_pt_H224_W448_bin1.1428571428571428
+    weight: 0.3333333333333333
+    eval_k: 3
+    handoff_t: 1.5
+    refeed_t: 1.0

@@ -170,3 +170,16 @@ def test_verify_fold_check_skips_folds_missing_from_the_record(tiny_run, fake_da
     save_folds(wrong, str(tmp_path / 'ft39l_fold_splits.json'))
     assert not replay(cfg, str(fake_data), str(tmp_path), fold=0, seeds=[34], device=torch.device('cpu'),
                       log=lambda *a: None)['ok']
+
+
+def test_check_v2_only_config_is_the_final_submission_without_l2():
+    from types import SimpleNamespace
+    from rogii_wellbore.infer import check_weights
+    full = yaml.safe_load(open(os.path.join(REPO, 'configs/submit/final_equal_weight.yaml')))['members']
+    v2 = yaml.safe_load(open(os.path.join(REPO, 'configs/submit/check_v2_only.yaml')))['members']
+    assert set(v2) == set(full) - {'l2_hT15_k1'}
+    assert all({k: v for k, v in v2[n].items() if k != 'weight'} == {k: v for k, v in full[n].items() if k != 'weight'}
+               for n in v2)
+    check_weights([SimpleNamespace(weight=v['weight']) for v in v2.values()])
+    ref = json.load(open(os.path.join(REPO, 'pipeline/03_submit/reference_rows.json')))
+    assert ref['v2_only_tol'] >= ref['l2_divergence_from_blend']['max'] / 3 + 0.005
