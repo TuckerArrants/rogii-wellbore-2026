@@ -63,7 +63,14 @@ much better on the private board than the final ensemble.
 
 ## Why the private score is above CV
 
-The ensemble scores 5.038 on CV (members 5.14–5.26); the private leaderboard gave 6.600. Two things are known. About
-16% of test wells are off the MD grid that every training well uses ([VALIDATION.md](VALIDATION.md)). And the
-neighbour-prior model, with almost the same CV (5.027), scored 6.11: on the private wells, the prior was worth about
-0.5 ft more than the final ensemble's extra members. How much of the gap each explains was not measured.
+The ensemble scores 5.038 on CV (members 5.14–5.26); the private leaderboard gave 6.600. The neighbour-prior model
+shows the same kind of gap (5.027 in CV, 6.11 private), and private scores ran above CV across the leaderboard. It
+comes from the task, not from one model:
+
+- **GR does not pin down a depth.** The same stretch of log can match the reference at two or more depths, and for
+  some wells nothing in the inputs says which one is right ([TASK.md](TASK.md#what-makes-it-hard)). A model that
+  picks the wrong one is off by around 10 ft, often for the rest of the well.
+- **RMSE punishes those wells hardest.** Errors are squared, so a few badly placed wells outweigh many good ones:
+  the worst 10% of wells carry about 60% of the squared error in CV.
+
+How many such wells land in a test set, and how badly they go, moves the score by more than any model change did.

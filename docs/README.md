@@ -13,7 +13,7 @@ Records:
 - [LEADERBOARD.md](LEADERBOARD.md): the CV line from ~12 ft to the final ensemble (5.038), every recorded public score,
   the final private result, and the better submission we did not pick.
 - [VALIDATION.md](VALIDATION.md): how folds were built, how a result was read, how the leaderboard's noise was priced,
-  and the two places where CV and the public board disagreed.
+  and the time the public board misled us.
 - [PORTING.md](PORTING.md): how the notebooks became the `rogii_wellbore` package, what the tests check against the
   notebooks, the deliberate differences, and how the port is checked on the real data.
 

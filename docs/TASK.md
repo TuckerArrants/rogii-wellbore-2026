@@ -25,8 +25,6 @@ Per well, two CSV files:
 - **Training:** 773 wells, 3.78 million rows to predict (the rows after the PS point).
 - **Coordinates:** `X`, `Y` are Texas state-plane feet; the wells are in the Eagle Ford / Austin Chalk / Buda section of
   South Texas.
-- **Grid:** in training, every well is on an exact 1.0 ft MD grid. About 16% of test wells are not (measured through
-  the leaderboard; see [VALIDATION.md](VALIDATION.md)).
 
 ## What the labels are
 
@@ -50,7 +48,7 @@ Predicting a constant from the PS point scores **15.9 ft**. The final models sco
    comes from information this dataset does not include, such as formation tops picked in nearby wells.
 3. **The error sits in a few wells.** The worst 10% of wells carry about 60% of the squared error. A small change in
    how a model handles those wells moves the score more than anything that happens on typical wells.
-4. **Few wells, and a test set that is not quite like training.** 773 wells is small for a deep network, so most of
+4. **Few wells, and a small public board.** 773 wells is small for a deep network, so most of
    the gains came from synthetic data and augmentation. And the public leaderboard scored only about 50 test wells,
    too few to judge small changes ([VALIDATION.md](VALIDATION.md)).
 
