@@ -74,3 +74,6 @@ comes from the task, not from one model:
   the worst 10% of wells carry about 60% of the squared error in CV.
 
 How many such wells land in a test set, and how badly they go, moves the score by more than any model change did.
+
+On top of that, our gap (1.56 ft) is about half a foot larger than the neighbour-prior model's (1.08 ft): that
+half foot is what dropping the prior cost.
