@@ -20,7 +20,7 @@ weights. Training is checked for running, not for its score.
 | **1. score the ensemble from its OOF files** | [`checks_colab.ipynb`](checks_colab.ipynb) | none | the real OOF files load, and the members and blend score 5.136 / 5.157 / 5.252 / 5.260 / **5.038** |
 | **2. replay a checkpoint** | [`checks_colab.ipynb`](checks_colab.ipynb) | 1–2 min per seed | real data, fold split, rendering, a real checkpoint, refeed and decode give the notebook's OOF numbers |
 | **3. tiny training run** | [`checks_colab.ipynb`](checks_colab.ipynb) | 10–15 min | the whole training path runs on the real data on a GPU (`configs/members/smoke.yaml`) |
-| **4. the full submission** | [`../03_submit/submit_kaggle.ipynb`](../03_submit/submit_kaggle.ipynb) | roughly 15–30 min on Kaggle | all 140 checkpoints give the saved submission's numbers on the 3 visible test wells (`reference_rows.json`) |
+| **4. the submission** | [`../03_submit/submit_kaggle.ipynb`](../03_submit/submit_kaggle.ipynb) | roughly 15–30 min on Kaggle | the Kaggle path (manifests, batched loading over 2 GPUs, blend, submission) gives the saved submission's numbers on the 3 visible test wells (`reference_rows.json`): to ~0.001 ft with all four members, or within 0.5 ft with the three V2 members only (`configs/submit/check_v2_only.yaml`) |
 
 Checks 1, 2 and 4 compare with numbers of record and print PASS or FAIL. Check 3 only has to finish.
 
@@ -35,7 +35,7 @@ python -m rogii_wellbore.verify --config configs/members/v2l.yaml --data-root <d
 
 On CPU it takes about 3 s per well for EfficientNetV2-L (153 wells in a fold), so it does not need a GPU.
 
-## Results (18 October 2026, Colab GPU)
+## Results (18 October 2026; checks 1–3 on a Colab GPU, check 4 on Kaggle 2× T4)
 
 **1. OOF scores: PASS.** Every number of record, to the printed precision:
 
@@ -60,4 +60,11 @@ against the recorded file only for the folds it holds.
 fine-tuning epochs with unrolling and EMA, then the OOF file, summary and manifest. Best 15.238 at epoch 1
 (constant 16.124), as expected for a run this short.
 
-**4. Full submission on Kaggle:** not run yet.
+**4. Submission on Kaggle: PASS** (three V2 members; the L2 model is no longer on Kaggle). Internet on, code
+cloned from GitHub, `segmentation_models_pytorch` and `timm` from PyPI. All 105 V2 checkpoints resolved from
+their manifests and ran over both GPUs; 14,151 rows written, every one from the models, range 11,592.77–12,239.13
+ft (saved submission: 11,592.99–12,239.20). All 16 reference values (10 rows, min/mean/max, 3 per-well means)
+within the 0.49 ft bound; the largest difference was 0.219 ft. The format-1 manifests do not record `refeed_T`,
+so the config's 1.0 is used, as in the notebook of record.
+
+All four checks pass. The package runs on the real data and reproduces the notebooks' results without retraining.

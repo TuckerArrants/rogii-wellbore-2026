@@ -183,3 +183,18 @@ def test_check_v2_only_config_is_the_final_submission_without_l2():
     check_weights([SimpleNamespace(weight=v['weight']) for v in v2.values()])
     ref = json.load(open(os.path.join(REPO, 'pipeline/03_submit/reference_rows.json')))
     assert ref['v2_only_tol'] >= ref['l2_divergence_from_blend']['max'] / 3 + 0.005
+
+
+def test_members_resolve_in_the_kaggle_dataset_layout(tiny_run, tmp_path):
+    """tuckerarrants/rogii-v2s holds each member twice nested (<name>/<name>/...), and the V2-L folder
+    name is a prefix of the V2-L small one; the configs point at the outer folder."""
+    import shutil
+    from rogii_wellbore.infer import resolve_member
+    cfg, out, _ = tiny_run
+    a, b = 'run_l', 'run_l_H224_W448'
+    for n in (a, b):
+        shutil.copytree(out, tmp_path / 'rogii-v2s' / n / n)
+    for n in (a, b):
+        m = resolve_member(n, {'dir': f'rogii-v2s/{n}', 'weight': 0.5, 'eval_k': 3, 'handoff_t': 1.5},
+                           root=str(tmp_path), log=lambda *x: None)
+        assert m.dir == str(tmp_path / 'rogii-v2s' / n / n) and len(m.paths) == 2
