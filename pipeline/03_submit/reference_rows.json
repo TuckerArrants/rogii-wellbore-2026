@@ -1,0 +1,12 @@
+{
+  "note": "From the saved run of final-submission-equal-weight-no-tta.ipynb on the 3 test wells Kaggle shows outside scoring (14,151 rows). Printed to 6 decimals (rows) and 2 decimals (stats).",
+  "n_rows": 14151,
+  "rows": {
+    "000d7d20_1442": 11747.473434, "000d7d20_1443": 11747.566731, "000d7d20_1444": 11747.566731,
+    "000d7d20_1445": 11747.566731, "000d7d20_1446": 11747.566731,
+    "00e12e8b_6379": 11599.940814, "00e12e8b_6380": 11599.940814, "00e12e8b_6381": 11599.940814,
+    "00e12e8b_6382": 11599.940814, "00e12e8b_6383": 11599.940814
+  },
+  "stats": {"min": 11592.99, "mean": 11904.20, "max": 12239.20},
+  "well_mean": {"000d7d20": 11744.38, "00bbac68": 12220.94, "00e12e8b": 11603.86}
+}

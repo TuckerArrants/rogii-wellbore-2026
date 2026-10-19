@@ -288,6 +288,30 @@ def run(config_path: str, comp_root: str, out_path: str = 'submission.csv', root
     return sub
 
 
+def check_reference(sub: pd.DataFrame, ref: dict, row_tol: float = 1e-3, stat_tol: float = 0.01, log=print) -> bool:
+    """Compare a submission with the numbers the notebook of record printed for the same wells
+    (``pipeline/03_submit/reference_rows.json``). Tolerances cover the printed rounding plus GPU
+    arithmetic order. Returns True when everything is within them."""
+    by_id = sub.set_index('id')['tvt']
+    checks = []
+    if len(sub) != ref['n_rows']:
+        log(f'rows: {len(sub)} here, {ref["n_rows"]} in the reference (a different test set?)')
+        return False
+    for rid, v in ref['rows'].items():
+        checks.append((f'row {rid}', float(by_id[rid]), v, row_tol))
+    for k, v in ref['stats'].items():
+        checks.append((f'{k} of all rows', float(getattr(sub['tvt'], k)()), v, stat_tol))
+    wid = sub['id'].str.rsplit('_', n=1).str[0]
+    for w, v in ref['well_mean'].items():
+        checks.append((f'mean of well {w}', float(sub['tvt'][wid == w].mean()), v, stat_tol))
+    worst = max(abs(a - b) for _, a, b, _ in checks)
+    bad = [(n, a, b) for n, a, b, t in checks if abs(a - b) > t]
+    for n, a, b in bad:
+        log(f'  {n}: {a:.6f} here, {b:.6f} in the reference')
+    log(f'{len(checks) - len(bad)}/{len(checks)} reference values match (largest difference {worst:.4f} ft)')
+    return not bad
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--config', required=True)

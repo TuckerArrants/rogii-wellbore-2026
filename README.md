@@ -150,8 +150,10 @@ src/rogii_wellbore/   the package (pip install -e .)
   metrics.py  oof.py    decode, offset/drift, tail, position; per-seed OOF files and ensembles
   eval.py               member and blend CV from OOF files
   infer.py              Kaggle inference and submission.csv
-configs/              members/, eval/, submit/ (one YAML each)
+  verify.py             checkpoint replay against the notebooks' OOF files
+configs/              members/ (plus smoke.yaml, a tiny check run), eval/, submit/ (one YAML each)
 pipeline/NN_*/        per stage: the notebook of record (outputs stripped), a driver notebook, a README
+pipeline/checks/      checks on the real data: OOF scores, checkpoint replay, a tiny training run
 tests/                parity with the notebooks of record, and an end-to-end run on fake data
 scripts/              strip_notebooks.py; make_kaggle_src.py (code as a Kaggle dataset); make_diagrams.py
 docs/                 task, glossary, validation, what didn't work, scores, porting notes; img/ diagrams
@@ -173,7 +175,12 @@ python -m rogii_wellbore.eval --config configs/eval/final_blend.yaml [--root <ru
 
 # the submission (on Kaggle: pipeline/03_submit/submit_kaggle.ipynb)
 python -m rogii_wellbore.infer --config configs/submit/final_equal_weight.yaml --comp-root <competition data>
+
+# replay a saved checkpoint and compare with the notebook's OOF file (CPU is fine)
+python -m rogii_wellbore.verify --config configs/members/v2l.yaml --data-root <data> --run-dir <run folder>
 ```
+
+The checks that the package runs on the real data, without retraining anything: [pipeline/checks/](pipeline/checks/).
 
 **Not in git:** competition data, checkpoints, OOF predictions, fold lists (they name competition wells). They are on
 Kaggle and Google Drive and listed in [ARTIFACTS.md](ARTIFACTS.md).

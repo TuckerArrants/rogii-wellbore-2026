@@ -15,7 +15,7 @@ Records:
 - [VALIDATION.md](VALIDATION.md): how folds were built, how a result was read, how the leaderboard's noise was priced,
   and the two places where CV and the public board disagreed.
 - [PORTING.md](PORTING.md): how the notebooks became the `rogii_wellbore` package, what the tests check against the
-  notebooks, the deliberate differences, and what is still owed.
+  notebooks, the deliberate differences, and how the port is checked on the real data.
 
 Diagrams (`img/`, drawn by `scripts/make_diagrams.py`): [the well as an image](img/well_as_image.svg) and
 [the two-stage U-Net and its training](img/two_stage_unet.svg). Both are explained in the

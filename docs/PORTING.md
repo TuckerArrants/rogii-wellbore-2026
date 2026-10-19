@@ -30,7 +30,8 @@ All on CPU, without the competition data (`tests/conftest.py` writes a small fak
 | `test_parity_data` | fold split equal; synthetic wells equal for 150 seeds in three settings (the members' pool, event pack off, noisy corruption with the dormant pinch switched on); generator inputs equal; rendered images equal at 256 × 512, 224 × 448 and 64 × 128, at five anchor-jitter offsets |
 | `test_parity_train` | fine-tuning samples equal (all augmentations, two geometries, two epochs); pretraining and validation samples equal; model outputs equal for forward, evaluation refeed to k = 4 and training unroll with its intermediate rounds, at three temperature settings; unroll draws and loss equal; **two full fine-tuning epochs** (EMA, unrolling, round supervision, k = 3 selection) give equal epoch scores, best state and final weights |
 | `test_parity_infer` | Kaggle image equal at two geometries; refeed equal; per-well member prediction equal at k = 1 and k = 3 |
-| `test_pipeline` | member configs name their Drive/Kaggle run folders and match the recorded recipes; a full member run (pool, pretraining, fine-tuning, OOF, summary, manifest) on fake data; resume; `eval` reproduces the training score exactly with the data and within 0.001 without it; `infer` writes a complete submission and refuses a temperature that disagrees with the manifest |
+| `test_real_encoders` | the four members' real encoders (EfficientNetV2-L, V2-XL, L2), built without weights: the package model's parameter names and shapes equal both notebooks' models, so the saved checkpoints load |
+| `test_pipeline` | member configs name their Drive/Kaggle run folders and match the recorded recipes; a full member run (pool, pretraining, fine-tuning, OOF, summary, manifest) on fake data; resume; `eval` reproduces the training score exactly with the data and within 0.001 without it; `infer` writes a complete submission and refuses a temperature that disagrees with the manifest; checkpoint replay (`verify`) reproduces a run's OOF file exactly and catches a swapped checkpoint; the submission reference check |
 
 ## Deliberate differences
 
@@ -57,12 +58,9 @@ notebook. Each is recorded in the ledger with its result.
 The neighbour-prior model (`pipeline/03_submit/stacked-unet-inference.ipynb`) is kept as its Kaggle notebook only.
 Its training notebook is not in the repo, and neither is ported.
 
-## Still owed
+## Checks on the real data
 
-- **The eval command on the real OOF files.** `python -m rogii_wellbore.eval --config configs/eval/final_blend.yaml`
-  on Colab should print the members' 5.136 / 5.157 / 5.252 / 5.260 and the blend's 5.038. The OOF files could not be
-  copied into the session that wrote this port (Drive downloads of 9 MB were refused), so this is not yet run.
-- **A GPU run against a recorded job.** For example the L2 member, fold 0, seed 34, from its pretraining checkpoint,
-  compared with `result_f0_s34.npz` in its run folder. Exact equality is not expected on GPU: the notebook ran with
-  `cudnn.benchmark = True` and non-deterministic kernels, and the unrolled members also draw different unroll steps
-  (difference 1). The check is that the score lands within seed noise (single seeds spread by 0.2–0.5 ft on a fold).
+The tests above use fake data and a small encoder. What they cannot show (the real files, encoders,
+checkpoints and a GPU) is covered by four checks that replay saved results instead of retraining:
+[pipeline/checks/](../pipeline/checks/). Retraining is not one of them: seed and GPU noise make a single
+retrained seed uninformative, and enough seeds to compare would cost days of GPU.

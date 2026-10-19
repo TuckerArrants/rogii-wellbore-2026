@@ -5,7 +5,7 @@ section. Sections and every key: `src/rogii_wellbore/config.py`.
 
 | folder | read by | files |
 |---|---|---|
-| `members/` | `python -m rogii_wellbore.run` | `base.yaml` (shared), `v2xl`, `v2l`, `v2l_small` (inherits `v2l`), `l2` |
+| `members/` | `python -m rogii_wellbore.run` | `base.yaml` (shared), `v2xl`, `v2l`, `v2l_small` (inherits `v2l`), `l2`; `smoke.yaml`, a tiny run for [the checks](../pipeline/checks/) |
 | `eval/` | `python -m rogii_wellbore.eval` | `final_blend.yaml`: the four members' Drive run folders, 0.25 each |
 | `submit/` | `python -m rogii_wellbore.infer` | `final_equal_weight.yaml`: the 26th-place submission |
 

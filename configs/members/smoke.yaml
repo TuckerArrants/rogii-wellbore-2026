@@ -1,0 +1,8 @@
+base: v2l.yaml
+name: smoke
+notes: >-
+  Not a member. A does-it-run check of the training path on the real data: EfficientNetV2-L at 256x512,
+  fold 0, one seed, a 200-well synthetic pool, 1 pretraining epoch and 2 fine-tuning epochs. Takes minutes,
+  not hours; its score means nothing (expect well above the members' ~5.2).
+synth: {n_wells: 200}
+train: {folds: [0], seeds: [34], pretrain_epochs: 1, finetune_epochs: 2, patience: 2}

@@ -2,8 +2,9 @@
 
     python scripts/make_kaggle_src.py [out_dir]     # default: dist/rogii-wellbore-src
 
-Copies ``src/rogii_wellbore`` and ``configs/`` and writes a ``dataset-metadata.json``; then
-``kaggle datasets create -p dist/rogii-wellbore-src`` (or ``version``) uploads it. The submit
+Copies ``src/rogii_wellbore``, ``configs/`` and the submission reference rows, and writes a ``dataset-metadata.json``; then
+``kaggle datasets create -p dist/rogii-wellbore-src --dir-mode zip`` (or ``version``) uploads it
+(without ``--dir-mode`` the CLI skips subfolders). The submit
 driver finds the package anywhere under /kaggle/input.
 """
 import json
@@ -21,6 +22,8 @@ def main(out=None):
     shutil.copytree(REPO / 'src' / 'rogii_wellbore', out / 'src' / 'rogii_wellbore',
                     ignore=shutil.ignore_patterns('__pycache__'))
     shutil.copytree(REPO / 'configs', out / 'configs')
+    (out / 'pipeline' / '03_submit').mkdir(parents=True)
+    shutil.copy(REPO / 'pipeline' / '03_submit' / 'reference_rows.json', out / 'pipeline' / '03_submit')
     (out / 'dataset-metadata.json').write_text(json.dumps(
         {'title': 'rogii-wellbore-src', 'id': 'tuckerarrants/rogii-wellbore-src', 'licenses': [{'name': 'MIT'}]}, indent=1))
     print(f'wrote {out}')

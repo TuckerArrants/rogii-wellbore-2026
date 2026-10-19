@@ -11,8 +11,9 @@ import yaml
 
 from rogii_wellbore import config as C
 from rogii_wellbore.eval import evaluate_blend
-from rogii_wellbore.infer import run as infer_run
+from rogii_wellbore.infer import check_reference, run as infer_run
 from rogii_wellbore.run import run as train_run
+from rogii_wellbore.verify import replay
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -105,3 +106,46 @@ def test_infer_writes_a_submission(tiny_run, fake_data, tmp_path):
     p.write_text(yaml.safe_dump(bad))
     with pytest.raises(AssertionError, match='handoff_T'):
         infer_run(str(p), str(fake_data), str(tmp_path / 's2.csv'), log=lambda *a: None)
+
+
+def test_verify_replays_a_checkpoint(tiny_run, fake_data):
+    """Checkpoint replay against the run's own OOF file: identical on CPU, and the split matches."""
+    cfg, out, _ = tiny_run
+    res = replay(cfg, str(fake_data), str(out), fold=0, seeds=[34, 68], device=torch.device('cpu'),
+                 log=lambda *a: None)
+    assert res['ok'] and res['fold_split_ok'] is True
+    assert all(r['max_d_pred'] == 0.0 and r['d_rmse'] == 0.0 for r in res['seeds'].values())
+
+
+def test_verify_catches_a_wrong_checkpoint(tiny_run, fake_data, tmp_path):
+    cfg, out, _ = tiny_run
+    import shutil
+    for f in os.listdir(out):
+        shutil.copy(out / f, tmp_path / f)
+    shutil.copy(out / 'ckpt_f0_s68.pt', tmp_path / 'ckpt_f0_s34.pt')      # seed 68's weights under 34's name
+    res = replay(cfg, str(fake_data), str(tmp_path), fold=0, seeds=[34], device=torch.device('cpu'),
+                 log=lambda *a: None)
+    assert not res['ok']
+
+
+def test_check_reference():
+    ref = json.load(open(os.path.join(REPO, 'pipeline/03_submit/reference_rows.json')))
+    rows = {f'000d7d20_{i}': 11744.38 for i in range(10)}
+    rows.update({f'00bbac68_{i}': 12220.94 for i in range(10)}); rows.update({f'00e12e8b_{i}': 11603.86 for i in range(10)})
+    rows.update(ref['rows'])
+    sub = pd.DataFrame({'id': list(rows), 'tvt': list(rows.values())})
+    ref = dict(ref, n_rows=len(sub), stats={'min': float(sub.tvt.min()), 'mean': float(sub.tvt.mean()),
+                                             'max': float(sub.tvt.max())},
+               well_mean={w: float(sub.tvt[sub.id.str.startswith(w)].mean()) for w in ref['well_mean']})
+    assert check_reference(sub, ref, log=lambda *a: None)
+    sub.loc[sub.id == '00e12e8b_6383', 'tvt'] += 0.01
+    assert not check_reference(sub, ref, log=lambda *a: None)
+
+
+def test_smoke_config_is_v2l_made_small():
+    s = C.load(os.path.join(REPO, 'configs/members/smoke.yaml'))
+    v = C.load(os.path.join(REPO, 'configs/members/v2l.yaml'))
+    assert s.model == v.model and s.geometry == v.geometry and s.aug == v.aug
+    assert (s.synth.n_wells, list(s.train.folds), list(s.train.seeds), s.train.pretrain_epochs,
+            s.train.finetune_epochs) == (200, [0], [34], 1, 2)
+    assert s.experiment_name() != v.experiment_name()     # never writes into a member's run folder

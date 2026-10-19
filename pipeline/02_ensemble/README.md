@@ -17,8 +17,8 @@ Reads each member's `oof_f*_s*.npz` (no GPU, no checkpoints) and prints:
 With `--data-root`, truth comes from the competition files and member scores are exactly the training-time numbers
 (the test suite checks this). Without it, truth is rebuilt from the OOF files and scores can move in the 4th decimal.
 
-**Expected on the final members:** 5.136 (V2-XL), 5.157 (V2-L), 5.252 (V2-L small), 5.260 (L2); blend **5.038**. Not
-yet run from the package; see [docs/PORTING.md](../../docs/PORTING.md).
+**Expected on the final members:** 5.136 (V2-XL), 5.157 (V2-L), 5.252 (V2-L small), 5.260 (L2); blend **5.038**. Check 1 in
+[pipeline/checks/](../checks/) runs this.
 
 ## The notebook of record
 
