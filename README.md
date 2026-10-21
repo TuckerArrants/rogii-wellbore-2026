@@ -42,7 +42,7 @@ image segmentation problem, and images come with tools that wiggly lines do not:
   training image with a known answer. Every model trains on 25,000 of these before it sees a real well. There are only
   773 real ones.
 
-Most top placing solutions formulated the problem this way, despite the task reading as a standard "tabular" one, where GBDT's would beat neural networks. Once the approach is reformulated as "well as an image", the UNet approach is far superior. 
+Most top placing solutions formulated the problem this way, despite the task reading as a standard "tabular" one, a regime in which GBDT's often beat neural networks. Once the approach is reformulated as "well as an image", the UNet approach is far superior. 
 
 ## How it works
 
