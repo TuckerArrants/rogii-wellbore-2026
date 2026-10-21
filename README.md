@@ -82,7 +82,7 @@ almost as well several feet higher or lower. What was tried against it:
 How the CV line came down from about 12 ft, every recorded leaderboard score, and why the private score sits above CV:
 [docs/LEADERBOARD.md](docs/LEADERBOARD.md).
 
-## The best model we did not submit
+## The best model I did not submit
 
 The final ensemble left out one input: a **neighbour prior**. Nearby training wells show how the rock layer tilts in
 each place. The prior reads those tilts along the new well's path (from the closest pieces of neighbouring wells,
@@ -110,7 +110,7 @@ The private board, the other three quarters of the test wells, went the other wa
 | | CV | public LB | private LB |
 |---|---|---|---|
 | the prior alone | 13.3 | 24.7 | **13.2** |
-| EfficientNetV2-XL with the prior (5.027 model) | 5.027 | 6.09 | **6.11** (would have placed 7th) |
+| EfficientNetV2-XL with the prior (5.027 model) | 5.027 | 6.09 | **6.11** |
 | final ensemble, no prior | 5.038 | | 6.600 (26th) |
 
 The prior alone scored 13.2 on the private board, the same as its 13.3 in CV. The CV was right; the public board's 50
