@@ -82,7 +82,7 @@ almost as well several feet higher or lower. What was tried against it:
 How the CV line came down from about 12 ft, every recorded leaderboard score, and why the private score sits above CV:
 [docs/LEADERBOARD.md](docs/LEADERBOARD.md).
 
-## The best model I did not submit
+## The best model that went unselected
 
 The final ensemble left out one input: a **neighbour prior**. Nearby training wells show how the rock layer tilts in
 each place. The prior reads those tilts along the new well's path (from the closest pieces of neighbouring wells,
