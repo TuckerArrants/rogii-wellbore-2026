@@ -111,7 +111,7 @@ The private board, the other three quarters of the test wells, went the other wa
 |---|---|---|---|
 | the prior alone | 13.3 | 24.7 | **13.2** |
 | EfficientNetV2-XL with the prior (5.027 model) | 5.027 | 6.09 | **6.11** |
-| final ensemble, no prior | 5.038 | | 6.600 (26th) |
+| final ensemble, no prior | 5.038 | 5.695 | 6.600 (26th) |
 
 The prior alone scored 13.2 on the private board, the same as its 13.3 in CV. The CV was right; the public board's 50
 wells were the odd ones out. Every submission that used the prior, as the 7th channel or as a simple blend with the
