@@ -18,8 +18,7 @@ The work was done in Colab and Kaggle notebooks between May and August 2026 and 
 `rogii_wellbore` package. The notebooks of record are kept, as run, in `pipeline/`; the tests check the package against
 them function by function ([docs/PORTING.md](docs/PORTING.md)).
 
-This was the hardest project I had ever worked on - I had no idea what "geosteering" was or even rudimentary understanding of oil wells.
-I had learn how geosteering with gamma-ray readings actually worked in real life before I could even think about how to tackle this project. 
+This was the hardest project I have ever worked on. I had no idea what geosteering was, and not even a basic understanding of how oil wells are drilled. Before I could think about a model, I had to learn how geologists actually steer a well with gamma-ray readings. Once that finally clicked, it was suddenly clear how to reformulate the task. A geologist doesn’t work it out with equations. They look at the well’s log next to the reference log, slide and stretch one against the other until the patterns line up, and trace the well’s path through the layers by eye. If people solve it by looking at a picture, a model built for pictures should be able to as well.
 
 ## The idea: draw the well as a picture
 
