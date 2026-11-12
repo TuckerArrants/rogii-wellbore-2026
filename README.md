@@ -22,7 +22,7 @@ This was the hardest project I have ever worked on. I had no idea what geosteeri
 
 ## The idea: draw the well as a picture
 
-A geologist solves this by lining up two wiggly lines. We drew each well as an image instead:
+So I drew each well as an image:
 
 ![Left: a cross-section with a vertical typewell and a horizontal well running through bent, dipping layers, known up to the PS point. Right: the same well as an image, where the layers become flat bands and the well becomes a line across them. Below: the five channels the network reads.](docs/img/well_as_image.svg)
 
