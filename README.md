@@ -18,6 +18,9 @@ The work was done in Colab and Kaggle notebooks between May and August 2026 and 
 `rogii_wellbore` package. The notebooks of record are kept, as run, in `pipeline/`; the tests check the package against
 them function by function ([docs/PORTING.md](docs/PORTING.md)).
 
+This was the hardest project I had ever worked on - I had no idea what "geosteering" was or even rudimentary understanding of oil wells.
+I had learn how geosteering with gamma-ray readings actually worked in real life before I could even think about how to tackle this project. 
+
 ## The idea: draw the well as a picture
 
 A geologist solves this by lining up two wiggly lines. We drew each well as an image instead:
